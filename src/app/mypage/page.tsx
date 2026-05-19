@@ -65,7 +65,7 @@ export default function MyPage() {
       ]);
 
       setMyDreams(dreamsRes.data ?? []);
-      setPurchases((purchasesRes.data ?? []) as PurchasedItem[]);
+      setPurchases((purchasesRes.data ?? []) as unknown as PurchasedItem[]);
       setTotalRevenue(
         (salesRes.data ?? []).reduce((sum, t) => sum + (t.seller_amount ?? 0), 0)
       );
