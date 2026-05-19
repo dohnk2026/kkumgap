@@ -11,6 +11,7 @@ interface Interpretation {
   category: string;
   traditional: string;
   psychological: string;
+  advice: string;
   price: number;
   luckyNumbers: number[];
   marketQuestion: string;
@@ -176,6 +177,18 @@ function InterpretContent() {
               {result.psychological}
             </p>
           </div>
+
+          {result.advice && (
+            <div className="glass-card rounded-2xl p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-lg">💌</span>
+                <h2 className="font-semibold text-white">몽해 할머니의 조언</h2>
+              </div>
+              <p className="text-sm leading-relaxed" style={{ color: "#cbd5e1" }}>
+                {result.advice}
+              </p>
+            </div>
+          )}
 
           <div className="glass-card rounded-2xl p-5">
             <div className="flex items-center gap-2 mb-3">
