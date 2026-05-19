@@ -1,26 +1,66 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --animate-twinkle: twinkle 2s ease-in-out infinite;
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-pulse-slow: pulse 4s ease-in-out infinite;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+@keyframes twinkle {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.1; transform: scale(0.4); }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-14px); }
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: #050210;
+  color: #f3f4f6;
+  min-height: 100vh;
+}
+
+/* 글로우 버튼 효과 */
+.btn-glow {
+  box-shadow: 0 0 20px rgba(124, 58, 237, 0.4);
+  transition: box-shadow 0.3s ease;
+}
+.btn-glow:hover {
+  box-shadow: 0 0 35px rgba(124, 58, 237, 0.7);
+}
+
+/* 유리 카드 */
+.glass-card {
+  background: rgba(15, 8, 40, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(124, 58, 237, 0.25);
+}
+
+/* 그라데이션 텍스트 */
+.gradient-text {
+  background: linear-gradient(135deg, #c4b5fd, #818cf8, #a78bfa);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* 달 글로우 */
+.moon-glow {
+  box-shadow:
+    0 0 30px rgba(253, 224, 71, 0.4),
+    0 0 80px rgba(253, 224, 71, 0.15);
+}
+
+/* 인풋 포커스 */
+.dream-input:focus {
+  outline: none;
+  border-color: rgba(124, 58, 237, 0.7);
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+}
+
+/* 가격 뱃지 글로우 */
+.price-glow {
+  box-shadow: 0 0 12px rgba(167, 139, 250, 0.5);
 }
