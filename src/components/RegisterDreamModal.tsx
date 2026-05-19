@@ -47,6 +47,7 @@ export default function RegisterDreamModal({ dream, result, onClose }: Props) {
           interpretation: `${result.traditional}\n\n${result.psychological}`,
           category: result.category,
           price,
+          lucky_numbers: result.luckyNumbers,
           status: "판매중",
         })
         .select("id")

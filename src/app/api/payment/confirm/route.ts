@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
     const sellerAmount = amount - fee;
 
     // 거래 기록
-    await supabase.from("transactions").insert({
+    const { data: tx } = await supabase.from("transactions").insert({
       dream_id: dreamId,
       buyer_id: buyerId,
       seller_id: dream.seller_id,
@@ -73,12 +73,12 @@ export async function POST(request: NextRequest) {
       fee,
       seller_amount: sellerAmount,
       status: "완료",
-    });
+    }).select("id").single();
 
     // 꿈 상태 변경
     await supabase.from("dreams").update({ status: "판매완료" }).eq("id", dreamId);
 
-    return NextResponse.json({ success: true, fee, sellerAmount });
+    return NextResponse.json({ success: true, fee, sellerAmount, transactionId: tx?.id ?? null });
   } catch (err) {
     console.error("Payment confirm error:", err);
     return NextResponse.json({ error: "서버 오류가 발생했습니다." }, { status: 500 });

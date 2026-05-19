@@ -8,9 +8,12 @@ import { supabase } from "@/lib/supabase";
 
 interface DreamData {
   title: string;
+  content: string;
   interpretation: string;
   category: string;
   price: number;
+  lucky_numbers: number[] | null;
+  users: { nickname: string } | null;
 }
 
 function SuccessContent() {
@@ -27,6 +30,9 @@ function SuccessContent() {
   const [dream, setDream] = useState<DreamData | null>(null);
   const [fee, setFee] = useState(0);
   const [sellerAmount, setSellerAmount] = useState(0);
+  const [transactionId, setTransactionId] = useState("");
+  const [confirming, setConfirming] = useState(false);
+  const [confirmed, setConfirmed] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
   useEffect(() => {
@@ -54,14 +60,15 @@ function SuccessContent() {
 
         setFee(data.fee);
         setSellerAmount(data.sellerAmount);
+        if (data.transactionId) setTransactionId(data.transactionId);
 
         const { data: dreamData } = await supabase
           .from("dreams")
-          .select("title, interpretation, category, price")
+          .select("title, content, interpretation, category, price, lucky_numbers, users(nickname)")
           .eq("id", dreamId)
           .single();
 
-        if (dreamData) setDream(dreamData);
+        if (dreamData) setDream(dreamData as unknown as DreamData);
         setStatus("success");
       } catch (err) {
         setErrorMsg(err instanceof Error ? err.message : "결제 처리 중 오류가 발생했습니다.");
@@ -71,6 +78,21 @@ function SuccessContent() {
 
     confirm();
   }, [authLoading, user, paymentKey, orderId, amount, dreamId, router]);
+
+  const handleConfirm = async () => {
+    if (!transactionId || !user) return;
+    setConfirming(true);
+    try {
+      const res = await fetch("/api/purchase/confirm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ transactionId, buyerId: user.id }),
+      });
+      if (res.ok) setConfirmed(true);
+    } finally {
+      setConfirming(false);
+    }
+  };
 
   if (status === "loading") {
     return (
@@ -114,7 +136,9 @@ function SuccessContent() {
     );
   }
 
-  const interpretationParts = dream?.interpretation.split("\n\n") ?? [];
+  const parts = dream?.interpretation.split("\n\n") ?? [];
+  const traditional = parts[0] ?? "";
+  const psychological = parts[1] ?? "";
 
   return (
     <main
@@ -123,39 +147,110 @@ function SuccessContent() {
     >
       <div
         className="absolute inset-0 pointer-events-none"
-        style={{
-          background: "radial-gradient(ellipse at 50% 10%, rgba(76, 29, 149, 0.25) 0%, transparent 60%)",
-        }}
+        style={{ background: "radial-gradient(ellipse at 50% 10%, rgba(76, 29, 149, 0.25) 0%, transparent 60%)" }}
       />
 
       <div className="relative z-10 max-w-2xl mx-auto px-5 py-12 pb-20">
         {/* 축하 헤더 */}
-        <div className="text-center mb-10">
-          <div
-            className="text-6xl mb-4 inline-block"
-            style={{ animation: "float 3s ease-in-out infinite" }}
-          >
+        <div className="text-center mb-6">
+          <div className="text-6xl mb-4 inline-block" style={{ animation: "float 3s ease-in-out infinite" }}>
             🎉
           </div>
           <h1 className="text-2xl font-bold text-white mb-2">꿈 구매 완료!</h1>
-          <p className="text-sm" style={{ color: "#a78bfa" }}>
-            이제 전체 해석을 볼 수 있어요
-          </p>
+          <p className="text-sm" style={{ color: "#a78bfa" }}>이제 전체 해석을 볼 수 있어요</p>
         </div>
 
-        {/* 결제 영수증 */}
+        {/* 결제 요약 한 줄 */}
         <div
-          className="rounded-2xl p-5 mb-6"
-          style={{ background: "rgba(15, 8, 40, 0.8)", border: "1px solid rgba(124, 58, 237, 0.2)" }}
+          className="rounded-2xl px-5 py-3.5 mb-6 flex items-center justify-center gap-2 flex-wrap text-sm"
+          style={{ background: "rgba(15,8,40,0.8)", border: "1px solid rgba(124,58,237,0.2)" }}
         >
-          <p className="text-xs font-medium mb-3" style={{ color: "rgba(167, 139, 250, 0.7)" }}>
-            💳 결제 내역
-          </p>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between items-center">
-              <span style={{ color: "#94a3b8" }}>결제 금액</span>
+          <span style={{ color: "#94a3b8" }}>결제</span>
+          <span
+            className="font-bold"
+            style={{
+              background: "linear-gradient(135deg, #fde68a, #fbbf24)",
+              backgroundClip: "text",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+            }}
+          >
+            ₩{amount.toLocaleString("ko-KR")}
+          </span>
+          <span style={{ color: "rgba(148,163,184,0.5)" }}>|</span>
+          <span style={{ color: "#94a3b8" }}>수수료 20%</span>
+          <span style={{ color: "rgba(148,163,184,0.7)" }}>₩{fee.toLocaleString("ko-KR")}</span>
+          <span style={{ color: "rgba(148,163,184,0.5)" }}>|</span>
+          <span style={{ color: "#94a3b8" }}>판매자 수익</span>
+          <span style={{ color: "rgba(148,163,184,0.7)" }}>₩{sellerAmount.toLocaleString("ko-KR")}</span>
+        </div>
+
+        {dream && (
+          <>
+            {/* 꿈 정보 헤더 */}
+            <div className="flex items-center gap-2 mb-2">
               <span
-                className="font-bold text-base"
+                className="text-xs px-3 py-1 rounded-full"
+                style={{ background: "rgba(124,58,237,0.2)", color: "#c4b5fd", border: "1px solid rgba(124,58,237,0.3)" }}
+              >
+                {dream.category}
+              </span>
+              <span className="text-xs" style={{ color: "rgba(148,163,184,0.5)" }}>
+                by {dream.users?.nickname ?? "익명"}
+              </span>
+            </div>
+            <h2 className="text-xl font-bold text-white mb-5 leading-snug">{dream.title}</h2>
+
+            {/* 꿈 내용 */}
+            <div
+              className="rounded-2xl p-5 mb-4"
+              style={{ background: "rgba(15,8,40,0.8)", border: "1px solid rgba(124,58,237,0.15)" }}
+            >
+              <p className="text-xs font-medium mb-3" style={{ color: "rgba(167,139,250,0.7)" }}>📝 꿈 내용</p>
+              <p className="text-sm leading-relaxed" style={{ color: "#e2e8f0", whiteSpace: "pre-wrap" }}>
+                {dream.content}
+              </p>
+            </div>
+
+            {/* 전통 해몽 */}
+            <div
+              className="rounded-2xl p-5 mb-4"
+              style={{ background: "rgba(15,8,40,0.8)", border: "1px solid rgba(124,58,237,0.15)" }}
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-lg">🔮</span>
+                <h3 className="font-semibold text-white">전통 해몽</h3>
+              </div>
+              <p className="text-sm leading-relaxed" style={{ color: "#cbd5e1", whiteSpace: "pre-wrap" }}>
+                {traditional}
+              </p>
+            </div>
+
+            {/* 심리 해석 */}
+            <div
+              className="rounded-2xl p-5 mb-4"
+              style={{ background: "rgba(15,8,40,0.8)", border: "1px solid rgba(124,58,237,0.15)" }}
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-lg">🧠</span>
+                <h3 className="font-semibold text-white">심리 해석</h3>
+              </div>
+              <p className="text-sm leading-relaxed" style={{ color: "#cbd5e1", whiteSpace: "pre-wrap" }}>
+                {psychological}
+              </p>
+            </div>
+
+            {/* 감정가 */}
+            <div
+              className="rounded-2xl p-5 mb-4"
+              style={{ background: "rgba(15,8,40,0.8)", border: "1px solid rgba(124,58,237,0.15)" }}
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-lg">💰</span>
+                <h3 className="font-semibold text-white">감정가</h3>
+              </div>
+              <p
+                className="text-2xl font-bold"
                 style={{
                   background: "linear-gradient(135deg, #fde68a, #fbbf24)",
                   backgroundClip: "text",
@@ -163,74 +258,83 @@ function SuccessContent() {
                   WebkitTextFillColor: "transparent",
                 }}
               >
-                ₩{amount.toLocaleString("ko-KR")}
-              </span>
+                ₩{dream.price.toLocaleString("ko-KR")}
+              </p>
             </div>
-            <div className="flex justify-between">
-              <span style={{ color: "#94a3b8" }}>플랫폼 수수료 (20%)</span>
-              <span style={{ color: "rgba(148, 163, 184, 0.7)" }}>₩{fee.toLocaleString("ko-KR")}</span>
-            </div>
-            <div className="flex justify-between">
-              <span style={{ color: "#94a3b8" }}>판매자 수령액</span>
-              <span style={{ color: "rgba(148, 163, 184, 0.7)" }}>₩{sellerAmount.toLocaleString("ko-KR")}</span>
-            </div>
-          </div>
-        </div>
 
-        {/* 전체 해석 */}
-        {dream && (
-          <>
-            <div className="flex items-center gap-2 mb-3">
-              <span
-                className="text-xs px-3 py-1 rounded-full"
-                style={{
-                  background: "rgba(124, 58, 237, 0.2)",
-                  color: "#c4b5fd",
-                  border: "1px solid rgba(124, 58, 237, 0.3)",
-                }}
+            {/* 행운의 숫자 */}
+            {dream.lucky_numbers && dream.lucky_numbers.length > 0 && (
+              <div
+                className="rounded-2xl p-5 mb-6"
+                style={{ background: "rgba(15,8,40,0.8)", border: "1px solid rgba(124,58,237,0.15)" }}
               >
-                {dream.category}
-              </span>
-            </div>
-            <h2 className="text-xl font-bold text-white mb-6 leading-snug">{dream.title}</h2>
-
-            <div className="space-y-4 mb-8">
-              {interpretationParts.map((part, i) => (
-                <div key={i} className="glass-card rounded-2xl p-5">
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-lg">{i === 0 ? "🏮" : "🧠"}</span>
-                    <h3 className="font-semibold text-white">
-                      {i === 0 ? "전통 해몽" : "심리 해석"}
-                    </h3>
-                  </div>
-                  <p className="text-sm leading-relaxed" style={{ color: "#cbd5e1", whiteSpace: "pre-wrap" }}>
-                    {part}
-                  </p>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-lg">🍀</span>
+                  <h3 className="font-semibold text-white">행운의 숫자</h3>
                 </div>
-              ))}
-            </div>
+                <div className="flex gap-3">
+                  {dream.lucky_numbers.map((n) => (
+                    <span
+                      key={n}
+                      className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold"
+                      style={{ background: "rgba(124,58,237,0.3)", color: "#c4b5fd", border: "1px solid rgba(124,58,237,0.5)" }}
+                    >
+                      {n}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
           </>
         )}
+
+        {/* 구매 확정 */}
+        <div
+          className="rounded-2xl p-5 mb-6"
+          style={{ background: "rgba(15,8,40,0.8)", border: "1px solid rgba(124,58,237,0.2)" }}
+        >
+          <p className="text-sm font-medium text-white mb-1">구매 확정</p>
+          <p className="text-xs mb-4" style={{ color: "rgba(167,139,250,0.6)" }}>
+            꿈 해석에 만족하셨나요? 구매를 확정하면 판매자에게 수익이 지급됩니다.
+          </p>
+          {confirmed ? (
+            <div
+              className="w-full py-3 rounded-xl text-center text-sm font-medium"
+              style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)", color: "#4ade80" }}
+            >
+              ✓ 구매가 확정되었습니다!
+            </div>
+          ) : (
+            <button
+              onClick={handleConfirm}
+              disabled={confirming || !transactionId}
+              className="w-full py-3 rounded-xl text-white font-medium transition-all disabled:opacity-50"
+              style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)" }}
+            >
+              {confirming ? "처리 중..." : "구매 확정하기"}
+            </button>
+          )}
+        </div>
 
         {/* 하단 버튼 */}
         <div className="space-y-3">
           <Link
-            href="/market"
+            href="/mypage"
             className="block w-full py-3.5 rounded-xl text-white font-semibold text-center btn-glow"
             style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)" }}
           >
-            꿈시장 더 구경하기
+            내 구매 목록 보기
           </Link>
           <Link
-            href="/"
+            href="/market"
             className="block w-full py-3.5 rounded-xl font-medium text-center"
             style={{
-              background: "rgba(15, 8, 40, 0.6)",
-              border: "1px solid rgba(124, 58, 237, 0.3)",
+              background: "rgba(15,8,40,0.6)",
+              border: "1px solid rgba(124,58,237,0.3)",
               color: "#a78bfa",
             }}
           >
-            내 꿈 해석하러 가기
+            꿈시장 더 구경하기
           </Link>
         </div>
       </div>

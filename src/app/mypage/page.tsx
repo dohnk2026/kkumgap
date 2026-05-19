@@ -11,6 +11,7 @@ type PurchasedItem = {
   id: string;
   price: number;
   created_at: string;
+  confirmed_at: string | null;
   dreams: { id: string; title: string; category: string } | null;
 };
 
@@ -53,7 +54,7 @@ export default function MyPage() {
           .order("created_at", { ascending: false }),
         supabase
           .from("transactions")
-          .select("id, price, created_at, dreams(id, title, category)")
+          .select("id, price, created_at, confirmed_at, dreams(id, title, category)")
           .eq("buyer_id", user!.id)
           .eq("status", "완료")
           .order("created_at", { ascending: false }),
@@ -99,6 +100,20 @@ export default function MyPage() {
   }
 
   const soldCount = myDreams.filter((d) => d.status === "판매완료").length;
+
+  const handleConfirm = async (transactionId: string) => {
+    if (!user) return;
+    const res = await fetch("/api/purchase/confirm", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ transactionId, buyerId: user.id }),
+    });
+    if (res.ok) {
+      setPurchases((prev) =>
+        prev.map((p) => p.id === transactionId ? { ...p, confirmed_at: new Date().toISOString() } : p)
+      );
+    }
+  };
 
   return (
     <main
@@ -286,17 +301,17 @@ export default function MyPage() {
             ) : (
               <div className="space-y-3">
                 {purchases.map((item) => (
-                  <Link
+                  <div
                     key={item.id}
-                    href={item.dreams ? `/market/${item.dreams.id}` : "/market"}
-                    className="block"
+                    className="rounded-2xl p-4 transition-all hover:border-violet-500/40"
+                    style={{
+                      background: "rgba(15,8,40,0.8)",
+                      border: "1px solid rgba(124,58,237,0.2)",
+                    }}
                   >
                     <div
-                      className="rounded-2xl p-4 transition-all hover:border-violet-500/40"
-                      style={{
-                        background: "rgba(15,8,40,0.8)",
-                        border: "1px solid rgba(124,58,237,0.2)",
-                      }}
+                      className="cursor-pointer"
+                      onClick={() => router.push(item.dreams ? `/market/${item.dreams.id}` : "/market")}
                     >
                       <div className="flex items-start justify-between gap-3 mb-2">
                         <h3
@@ -307,13 +322,12 @@ export default function MyPage() {
                         </h3>
                         <span
                           className="text-xs px-2 py-0.5 rounded-full shrink-0"
-                          style={{
-                            background: "rgba(34,197,94,0.1)",
-                            color: "#4ade80",
-                            border: "1px solid rgba(34,197,94,0.25)",
-                          }}
+                          style={item.confirmed_at
+                            ? { background: "rgba(34,197,94,0.1)", color: "#4ade80", border: "1px solid rgba(34,197,94,0.25)" }
+                            : { background: "rgba(234,179,8,0.1)", color: "#fbbf24", border: "1px solid rgba(234,179,8,0.25)" }
+                          }
                         >
-                          구매완료
+                          {item.confirmed_at ? "구매 확정 완료" : "확정 대기"}
                         </span>
                       </div>
                       <div className="flex items-center justify-between">
@@ -347,7 +361,16 @@ export default function MyPage() {
                         </div>
                       </div>
                     </div>
-                  </Link>
+                    {!item.confirmed_at && (
+                      <button
+                        onClick={() => handleConfirm(item.id)}
+                        className="w-full mt-3 py-2 rounded-xl text-sm font-medium transition-all"
+                        style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)", color: "white" }}
+                      >
+                        구매 확정하기
+                      </button>
+                    )}
+                  </div>
                 ))}
               </div>
             )}
