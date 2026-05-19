@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useAuth } from "@/lib/auth-context";
 
 interface Star {
   id: number;
@@ -53,10 +54,27 @@ export default function HomePage() {
   const [dream, setDream] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
+
+  useEffect(() => {
+    if (user && !authLoading) {
+      const pending = sessionStorage.getItem("pending-dream");
+      if (pending) {
+        sessionStorage.removeItem("pending-dream");
+        setDream(pending);
+      }
+    }
+  }, [user, authLoading]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!dream.trim()) return;
+
+    if (!user) {
+      sessionStorage.setItem("pending-dream", dream.trim());
+      router.push("/login");
+      return;
+    }
 
     setIsLoading(true);
     router.push(`/interpret?dream=${encodeURIComponent(dream.trim())}`);
@@ -169,6 +187,8 @@ export default function HomePage() {
                 </svg>
                 꿈을 해석하는 중...
               </span>
+            ) : !authLoading && !user ? (
+              "🔒 로그인하고 무료 해석 받기"
             ) : (
               "✨ 꿈 해석하기"
             )}

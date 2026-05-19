@@ -105,6 +105,7 @@ export default function MarketDreamPage() {
   const parts = dream.interpretation.split("\n\n");
   const traditional = parts[0] ?? "";
   const psychological = parts[1] ?? "";
+  const advice = parts[2] ?? "";
 
   return (
     <main
@@ -185,6 +186,18 @@ export default function MarketDreamPage() {
                 {psychological}
               </p>
             </div>
+
+            {advice && (
+              <div className="glass-card rounded-2xl p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-lg">🎯</span>
+                  <h2 className="font-semibold text-white">몽해 할머니의 조언</h2>
+                </div>
+                <p className="text-sm leading-relaxed" style={{ color: "#cbd5e1", whiteSpace: "pre-wrap" }}>
+                  {advice}
+                </p>
+              </div>
+            )}
 
             <div className="glass-card rounded-2xl p-5">
               <div className="flex items-center gap-2 mb-3">

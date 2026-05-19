@@ -9,6 +9,7 @@ interface Interpretation {
   category: string;
   traditional: string;
   psychological: string;
+  advice: string;
   price: number;
   luckyNumbers: number[];
   marketQuestion: string;
@@ -44,7 +45,7 @@ export default function RegisterDreamModal({ dream, result, onClose }: Props) {
           seller_id: user.id,
           title: title.trim(),
           content: dream,
-          interpretation: `${result.traditional}\n\n${result.psychological}`,
+          interpretation: `${result.traditional}\n\n${result.psychological}${result.advice ? "\n\n" + result.advice : ""}`,
           category: result.category,
           price,
           lucky_numbers: result.luckyNumbers,

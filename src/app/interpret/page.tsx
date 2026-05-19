@@ -19,60 +19,107 @@ interface Interpretation {
 
 const CATEGORY_EMOJI: Record<string, string> = {
   재물운: "💰",
-  성공운: "✈️",
-  인간관계: "🤝",
-  대길운: "🌸",
-  "열정·변화": "🔥",
+  성공운: "🚀",
+  연애운: "💕",
+  경고몽: "⚠️",
+  태몽: "👶",
+  건강운: "💚",
+  관계운: "🤝",
+  자아성장: "🌱",
+  기타: "🌙",
 };
+
+type PageStatus = "loading" | "success" | "login_required" | "daily_limit" | "error";
 
 function InterpretContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const dream = searchParams.get("dream") || "";
 
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [result, setResult] = useState<Interpretation | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [pageStatus, setPageStatus] = useState<PageStatus>("loading");
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [paying, setPaying] = useState(false);
 
   useEffect(() => {
     if (!dream.trim()) {
       router.replace("/");
       return;
     }
+    if (authLoading) return;
+
+    if (!user) {
+      setPageStatus("login_required");
+      return;
+    }
 
     let cancelled = false;
 
     async function fetchInterpretation() {
-      setLoading(true);
+      setPageStatus("loading");
       setError(null);
       try {
         const res = await fetch("/api/interpret", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ dream }),
+          body: JSON.stringify({ dream, userId: user!.id }),
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "해석 실패");
-        if (!cancelled) setResult(data);
+        if (cancelled) return;
+
+        if (data.error === "login_required" || res.status === 401) {
+          setPageStatus("login_required");
+        } else if (data.error === "daily_limit" || res.status === 429) {
+          setPageStatus("daily_limit");
+        } else if (!res.ok) {
+          setError(data.error || "해석 실패");
+          setPageStatus("error");
+        } else {
+          setResult(data);
+          setPageStatus("success");
+        }
       } catch (err) {
-        if (!cancelled) setError(err instanceof Error ? err.message : "오류가 발생했습니다.");
-      } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : "오류가 발생했습니다.");
+          setPageStatus("error");
+        }
       }
     }
 
     fetchInterpretation();
     return () => { cancelled = true; };
-  }, [dream, router]);
+  }, [dream, router, user, authLoading]);
 
-  if (loading) {
+  const handlePaidInterpret = async () => {
+    if (!user || paying) return;
+    setPaying(true);
+    try {
+      const { loadTossPayments } = await import("@tosspayments/tosspayments-sdk");
+      const tossPayments = await loadTossPayments(process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY!);
+      const payment = tossPayments.payment({ customerKey: user.id });
+      const orderId = `interpret-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+      localStorage.setItem(`interpret-dream-${orderId}`, dream);
+      await payment.requestPayment({
+        method: "CARD",
+        amount: { currency: "KRW", value: 1000 },
+        orderId,
+        orderName: "꿈 해석 (유료)",
+        successUrl: `${window.location.origin}/payment/interpret-success?orderId=${orderId}&amount=1000`,
+        failUrl: `${window.location.origin}/payment/fail`,
+        customerEmail: user.email ?? undefined,
+      });
+    } catch {
+      setPaying(false);
+    }
+  };
+
+  const bgMain = { background: "linear-gradient(to bottom, #050210, #0a0428, #050210)" };
+
+  if (pageStatus === "loading") {
     return (
-      <main
-        className="min-h-screen flex items-center justify-center"
-        style={{ background: "linear-gradient(to bottom, #050210, #0a0428, #050210)" }}
-      >
+      <main className="min-h-screen flex items-center justify-center" style={bgMain}>
         <div className="text-center px-6">
           <div
             className="w-20 h-20 rounded-full mx-auto mb-6 flex items-center justify-center text-3xl"
@@ -91,12 +138,70 @@ function InterpretContent() {
     );
   }
 
-  if (error || !result) {
+  if (pageStatus === "login_required") {
     return (
-      <main
-        className="min-h-screen flex items-center justify-center"
-        style={{ background: "linear-gradient(to bottom, #050210, #0a0428, #050210)" }}
-      >
+      <main className="min-h-screen flex items-center justify-center px-5" style={bgMain}>
+        <div className="text-center max-w-sm w-full">
+          <p className="text-5xl mb-4">🔒</p>
+          <p className="text-white font-bold text-xl mb-2">로그인이 필요해요</p>
+          <p className="text-sm mb-6" style={{ color: "#a78bfa" }}>
+            무료 해석은 하루 1회, 로그인 후 이용할 수 있어요.
+          </p>
+          <button
+            onClick={() => {
+              sessionStorage.setItem("pending-dream", dream);
+              router.push("/login");
+            }}
+            className="btn-glow w-full py-4 rounded-xl text-white font-semibold mb-3"
+            style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)" }}
+          >
+            로그인하고 무료 해석받기
+          </button>
+          <button
+            onClick={() => router.push("/")}
+            className="w-full py-3 rounded-xl font-medium"
+            style={{ background: "rgba(15,8,40,0.6)", border: "1px solid rgba(124,58,237,0.3)", color: "#a78bfa" }}
+          >
+            돌아가기
+          </button>
+        </div>
+      </main>
+    );
+  }
+
+  if (pageStatus === "daily_limit") {
+    return (
+      <main className="min-h-screen flex items-center justify-center px-5" style={bgMain}>
+        <div className="text-center max-w-sm w-full">
+          <p className="text-5xl mb-4">🌙</p>
+          <p className="text-white font-bold text-xl mb-2">오늘 무료 해석을 이미 사용했어요</p>
+          <p className="text-sm mb-1" style={{ color: "#a78bfa" }}>무료 해석은 하루 1회예요.</p>
+          <p className="text-sm mb-6" style={{ color: "rgba(167,139,250,0.6)" }}>
+            자정(KST)에 다시 무료로 해석받을 수 있어요.
+          </p>
+          <button
+            onClick={handlePaidInterpret}
+            disabled={paying}
+            className="btn-glow w-full py-4 rounded-xl text-white font-semibold mb-3 disabled:opacity-50"
+            style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)" }}
+          >
+            {paying ? "결제 중..." : "✨ 유료 해석받기 · ₩1,000"}
+          </button>
+          <button
+            onClick={() => router.push("/")}
+            className="w-full py-3 rounded-xl font-medium"
+            style={{ background: "rgba(15,8,40,0.6)", border: "1px solid rgba(124,58,237,0.3)", color: "#a78bfa" }}
+          >
+            돌아가기
+          </button>
+        </div>
+      </main>
+    );
+  }
+
+  if (pageStatus === "error" || !result) {
+    return (
+      <main className="min-h-screen flex items-center justify-center" style={bgMain}>
         <div className="text-center px-6">
           <p className="text-5xl mb-4">😔</p>
           <p className="text-white font-semibold mb-2">해석에 실패했어요</p>
@@ -119,7 +224,7 @@ function InterpretContent() {
   return (
     <main
       className="min-h-screen relative"
-      style={{ background: "linear-gradient(to bottom, #050210, #0a0428, #050210)" }}
+      style={bgMain}
     >
       <div
         className="absolute inset-0 pointer-events-none"
@@ -132,7 +237,6 @@ function InterpretContent() {
       <Header secondaryHref="/market" secondaryLabel="꿈 시장 →" />
 
       <div className="relative z-10 max-w-2xl mx-auto px-5 pb-24">
-        {/* 카테고리 뱃지 */}
         <div className="flex justify-center mt-6 mb-8">
           <span
             className="px-4 py-1.5 rounded-full text-sm font-medium"
@@ -146,7 +250,6 @@ function InterpretContent() {
           </span>
         </div>
 
-        {/* 원본 꿈 */}
         <div className="glass-card rounded-2xl p-5 mb-6">
           <p className="text-xs font-medium mb-3" style={{ color: "rgba(167, 139, 250, 0.7)" }}>
             📝 당신의 꿈
@@ -156,7 +259,6 @@ function InterpretContent() {
           </p>
         </div>
 
-        {/* 해석 섹션들 */}
         <div className="space-y-4 mb-6">
           <div className="glass-card rounded-2xl p-5">
             <div className="flex items-center gap-2 mb-3">
@@ -181,7 +283,7 @@ function InterpretContent() {
           {result.advice && (
             <div className="glass-card rounded-2xl p-5">
               <div className="flex items-center gap-2 mb-3">
-                <span className="text-lg">💌</span>
+                <span className="text-lg">🎯</span>
                 <h2 className="font-semibold text-white">몽해 할머니의 조언</h2>
               </div>
               <p className="text-sm leading-relaxed" style={{ color: "#cbd5e1" }}>
@@ -213,7 +315,6 @@ function InterpretContent() {
           </div>
         </div>
 
-        {/* 감정가 카드 */}
         <div
           className="rounded-2xl p-6 mb-8 text-center"
           style={{
@@ -254,7 +355,6 @@ function InterpretContent() {
           )}
         </div>
 
-        {/* 액션 버튼 */}
         <div className="space-y-3">
           <button
             className="btn-glow w-full py-4 rounded-xl text-white font-semibold transition-all text-base"
