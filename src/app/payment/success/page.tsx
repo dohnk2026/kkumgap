@@ -34,6 +34,8 @@ function SuccessContent() {
   const [confirming, setConfirming] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [isGift, setIsGift] = useState(false);
+  const [recipientNickname, setRecipientNickname] = useState("");
 
   useEffect(() => {
     if (authLoading) return;
@@ -49,18 +51,30 @@ function SuccessContent() {
       ran = true;
 
       try {
+        const storedGift = localStorage.getItem(`gift-info-${orderId}`);
+        const giftData = storedGift ? JSON.parse(storedGift) : null;
+
         const res = await fetch("/api/payment/confirm", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ paymentKey, orderId, amount, dreamId, buyerId: user!.id }),
+          body: JSON.stringify({
+            paymentKey, orderId, amount, dreamId, buyerId: user!.id,
+            ...(giftData && { giftRecipientId: giftData.recipientId, giftMessage: giftData.message }),
+          }),
         });
 
         const data = await res.json();
         if (!res.ok) throw new Error(data.error);
 
+        if (giftData) localStorage.removeItem(`gift-info-${orderId}`);
+
         setFee(data.fee);
         setSellerAmount(data.sellerAmount);
         if (data.transactionId) setTransactionId(data.transactionId);
+        if (data.isGift) {
+          setIsGift(true);
+          setRecipientNickname(data.recipientNickname ?? giftData?.recipientNickname ?? "상대방");
+        }
 
         const { data: dreamData } = await supabase
           .from("dreams")
@@ -155,11 +169,51 @@ function SuccessContent() {
         {/* 축하 헤더 */}
         <div className="text-center mb-6">
           <div className="text-6xl mb-4 inline-block" style={{ animation: "float 3s ease-in-out infinite" }}>
-            🎉
+            {isGift ? "🎁" : "🎉"}
           </div>
-          <h1 className="text-2xl font-bold text-white mb-2">꿈 구매 완료!</h1>
-          <p className="text-sm" style={{ color: "#a78bfa" }}>이제 전체 해석을 볼 수 있어요</p>
+          <h1 className="text-2xl font-bold text-white mb-2">
+            {isGift ? "선물 완료!" : "꿈 구매 완료!"}
+          </h1>
+          <p className="text-sm" style={{ color: "#a78bfa" }}>
+            {isGift
+              ? `${recipientNickname}님에게 꿈을 선물했어요`
+              : "이제 전체 해석을 볼 수 있어요"}
+          </p>
         </div>
+
+        {/* 선물 완료 시: 간단한 완료 화면만 보여줌 */}
+        {isGift && (
+          <div className="space-y-3">
+            <div
+              className="rounded-2xl p-5 mb-2 text-center"
+              style={{ background: "rgba(124,58,237,0.12)", border: "1px solid rgba(124,58,237,0.3)" }}
+            >
+              <p className="text-white font-semibold mb-1">🌙 {dream?.title}</p>
+              <p className="text-sm mb-3" style={{ color: "rgba(167,139,250,0.7)" }}>
+                {recipientNickname}님이 전체 해석을 열람할 수 있어요
+              </p>
+              <p className="text-xs" style={{ color: "rgba(148,163,184,0.5)" }}>
+                결제 ₩{amount.toLocaleString("ko-KR")} · 수수료 20% ₩{fee.toLocaleString("ko-KR")} · 판매자 수익 ₩{sellerAmount.toLocaleString("ko-KR")}
+              </p>
+            </div>
+            <Link
+              href="/mypage"
+              className="block w-full py-3.5 rounded-xl text-white font-semibold text-center btn-glow"
+              style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)" }}
+            >
+              보낸 선물함 보기
+            </Link>
+            <Link
+              href="/market"
+              className="block w-full py-3.5 rounded-xl font-medium text-center"
+              style={{ background: "rgba(15,8,40,0.6)", border: "1px solid rgba(124,58,237,0.3)", color: "#a78bfa" }}
+            >
+              꿈시장 더 구경하기
+            </Link>
+          </div>
+        )}
+
+        {!isGift && (<>
 
         {/* 결제 요약 한 줄 */}
         <div
@@ -354,6 +408,7 @@ function SuccessContent() {
             꿈시장 더 구경하기
           </Link>
         </div>
+        </>)}
       </div>
     </main>
   );

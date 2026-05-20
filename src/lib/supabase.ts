@@ -27,6 +27,18 @@ export type Dream = {
   users?: { nickname: string } | null;
 };
 
+export type Gift = {
+  id: string;
+  dream_id: string;
+  sender_id: string;
+  recipient_id: string;
+  message: string | null;
+  gift_type: "free_share" | "purchased";
+  transaction_id: string | null;
+  created_at: string;
+  claimed_at: string | null;
+};
+
 export type Transaction = {
   id: string;
   dream_id: string;

@@ -8,7 +8,7 @@ const supabase = createClient(
 
 export async function POST(request: NextRequest) {
   try {
-    const { paymentKey, orderId, amount, dreamId, buyerId } = await request.json();
+    const { paymentKey, orderId, amount, dreamId, buyerId, giftRecipientId, giftMessage } = await request.json();
 
     if (!paymentKey || !orderId || !amount || !dreamId || !buyerId) {
       return NextResponse.json({ error: "필수 파라미터가 없습니다." }, { status: 400 });
@@ -77,6 +77,29 @@ export async function POST(request: NextRequest) {
 
     // 꿈 상태 변경
     await supabase.from("dreams").update({ status: "판매완료" }).eq("id", dreamId);
+
+    // 선물 구매인 경우 gift 레코드 생성
+    if (giftRecipientId) {
+      await supabase.from("gifts").insert({
+        dream_id: dreamId,
+        sender_id: buyerId,
+        recipient_id: giftRecipientId,
+        message: giftMessage || null,
+        gift_type: "purchased",
+        transaction_id: tx?.id ?? null,
+      });
+
+      const { data: recipientUser } = await supabase
+        .from("users")
+        .select("nickname")
+        .eq("id", giftRecipientId)
+        .single();
+
+      return NextResponse.json({
+        success: true, fee, sellerAmount, transactionId: tx?.id ?? null,
+        isGift: true, recipientNickname: recipientUser?.nickname ?? "상대방",
+      });
+    }
 
     return NextResponse.json({ success: true, fee, sellerAmount, transactionId: tx?.id ?? null });
   } catch (err) {
