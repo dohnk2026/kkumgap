@@ -37,6 +37,13 @@ type SentGift = {
 
 type Tab = "selling" | "bought" | "received" | "sent";
 
+type WithdrawForm = {
+  bankName: string;
+  accountNumber: string;
+  accountHolder: string;
+  amount: string;
+};
+
 const STATUS_STYLE: Record<string, { label: string; bg: string; color: string; border: string }> = {
   판매중:   { label: "판매중",   bg: "rgba(34,197,94,0.15)",  color: "#4ade80", border: "rgba(34,197,94,0.3)" },
   판매완료: { label: "판매완료", bg: "rgba(100,116,139,0.15)", color: "#94a3b8", border: "rgba(100,116,139,0.3)" },
@@ -66,14 +73,20 @@ export default function MyPage() {
   const [receivedGifts, setReceivedGifts] = useState<ReceivedGift[]>([]);
   const [sentGifts, setSentGifts] = useState<SentGift[]>([]);
   const [totalRevenue, setTotalRevenue] = useState(0);
+  const [balance, setBalance] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [withdrawModal, setWithdrawModal] = useState(false);
+  const [withdrawForm, setWithdrawForm] = useState<WithdrawForm>({ bankName: "", accountNumber: "", accountHolder: "", amount: "" });
+  const [withdrawing, setWithdrawing] = useState(false);
+  const [withdrawError, setWithdrawError] = useState("");
+  const [withdrawSuccess, setWithdrawSuccess] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
     if (!user) { router.replace("/login"); return; }
 
     async function loadData() {
-      const [dreamsRes, purchasesRes, salesRes, receivedRes, sentRes] = await Promise.all([
+      const [dreamsRes, purchasesRes, salesRes, receivedRes, sentRes, balanceRes] = await Promise.all([
         supabase
           .from("dreams")
           .select("*")
@@ -100,6 +113,11 @@ export default function MyPage() {
           .select("id, created_at, claimed_at, gift_type, dreams(id, title, category), recipient:users!recipient_id(nickname)")
           .eq("sender_id", user!.id)
           .order("created_at", { ascending: false }),
+        supabase
+          .from("users")
+          .select("balance")
+          .eq("id", user!.id)
+          .single(),
       ]);
 
       setMyDreams(dreamsRes.data ?? []);
@@ -107,6 +125,7 @@ export default function MyPage() {
       setTotalRevenue(
         (salesRes.data ?? []).reduce((sum, t) => sum + (t.seller_amount ?? 0), 0)
       );
+      setBalance(balanceRes.data?.balance ?? 0);
 
       // Received gifts: extract sender nickname from join
       const received = ((receivedRes.data ?? []) as unknown as Array<{
@@ -203,6 +222,36 @@ export default function MyPage() {
       window.location.reload();
     }
     setNicknameSaving(false);
+  };
+
+  const handleWithdraw = async () => {
+    const amount = parseInt(withdrawForm.amount);
+    if (!withdrawForm.bankName || !withdrawForm.accountNumber || !withdrawForm.accountHolder || !withdrawForm.amount) {
+      setWithdrawError("모든 항목을 입력해주세요."); return;
+    }
+    if (isNaN(amount) || amount < 1000) { setWithdrawError("최소 출금액은 1,000원입니다."); return; }
+    if (amount > balance) { setWithdrawError("잔액이 부족합니다."); return; }
+    setWithdrawing(true);
+    setWithdrawError("");
+    const { data: { session } } = await supabase.auth.getSession();
+    const res = await fetch("/api/withdraw", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${session?.access_token ?? ""}` },
+      body: JSON.stringify({
+        amount,
+        bankName: withdrawForm.bankName,
+        accountNumber: withdrawForm.accountNumber,
+        accountHolder: withdrawForm.accountHolder,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      setWithdrawError(data.error ?? "출금 신청에 실패했습니다.");
+    } else {
+      setBalance((prev) => prev - amount);
+      setWithdrawSuccess(true);
+    }
+    setWithdrawing(false);
   };
 
   const handleClaimGift = async (giftId: string, dreamId: string, alreadyClaimed: boolean) => {
@@ -318,6 +367,35 @@ export default function MyPage() {
               <p className="text-xs" style={{ color: "rgba(148,163,184,0.6)" }}>{stat.label}</p>
             </div>
           ))}
+        </div>
+
+        {/* 잔액 카드 */}
+        <div
+          className="rounded-2xl p-5 mb-6 flex items-center justify-between gap-4"
+          style={{ background: "rgba(15,8,40,0.8)", border: "1px solid rgba(253,230,138,0.2)" }}
+        >
+          <div>
+            <p className="text-xs mb-1" style={{ color: "rgba(167,139,250,0.7)" }}>출금 가능 잔액</p>
+            <p
+              className="text-2xl font-bold"
+              style={{
+                background: "linear-gradient(135deg, #fde68a, #fbbf24)",
+                backgroundClip: "text",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+              }}
+            >
+              ₩{balance.toLocaleString("ko-KR")}
+            </p>
+            <p className="text-xs mt-1" style={{ color: "rgba(148,163,184,0.4)" }}>구매 확정 후 적립됩니다</p>
+          </div>
+          <button
+            onClick={() => { setWithdrawModal(true); setWithdrawSuccess(false); setWithdrawError(""); setWithdrawForm({ bankName: "", accountNumber: "", accountHolder: "", amount: "" }); }}
+            className="px-4 py-2.5 rounded-xl text-sm font-medium shrink-0"
+            style={{ background: "rgba(253,230,138,0.1)", border: "1px solid rgba(253,230,138,0.3)", color: "#fde68a" }}
+          >
+            출금 신청
+          </button>
         </div>
 
         {/* 탭 (4개) */}
@@ -523,6 +601,71 @@ export default function MyPage() {
           )
         )}
       </div>
+
+      {/* 출금 신청 모달 */}
+      {withdrawModal && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-4 pb-6 sm:pb-0">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setWithdrawModal(false)} />
+          <div
+            className="relative w-full max-w-sm rounded-2xl p-6"
+            style={{ background: "#0a0428", border: "1px solid rgba(124,58,237,0.4)" }}
+          >
+            <button
+              onClick={() => setWithdrawModal(false)}
+              className="absolute top-4 right-4 w-7 h-7 rounded-full flex items-center justify-center text-sm"
+              style={{ color: "rgba(167,139,250,0.5)", background: "rgba(124,58,237,0.1)" }}
+            >
+              ✕
+            </button>
+            <h2 className="text-white font-bold text-lg mb-1">출금 신청</h2>
+            <p className="text-xs mb-5" style={{ color: "#a78bfa" }}>
+              출금 가능: ₩{balance.toLocaleString("ko-KR")}
+            </p>
+
+            {withdrawSuccess ? (
+              <div className="text-center py-4">
+                <p className="text-3xl mb-3">✅</p>
+                <p className="font-semibold text-white mb-1">신청이 완료되었습니다</p>
+                <p className="text-sm" style={{ color: "rgba(167,139,250,0.7)" }}>
+                  1~2 영업일 내로 입금됩니다
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {[
+                  { key: "bankName" as const, label: "은행명", placeholder: "예: 국민은행" },
+                  { key: "accountNumber" as const, label: "계좌번호", placeholder: "숫자만 입력" },
+                  { key: "accountHolder" as const, label: "예금주명", placeholder: "본인 명의" },
+                  { key: "amount" as const, label: "출금 금액", placeholder: "최소 1,000원" },
+                ].map(({ key, label, placeholder }) => (
+                  <div key={key}>
+                    <label className="block text-xs mb-1" style={{ color: "rgba(167,139,250,0.7)" }}>{label}</label>
+                    <input
+                      type={key === "amount" ? "number" : "text"}
+                      value={withdrawForm[key]}
+                      onChange={(e) => setWithdrawForm((prev) => ({ ...prev, [key]: e.target.value }))}
+                      placeholder={placeholder}
+                      className="w-full px-3 py-2.5 rounded-xl text-sm text-white outline-none"
+                      style={{ background: "rgba(15,8,40,0.8)", border: "1px solid rgba(124,58,237,0.3)" }}
+                    />
+                  </div>
+                ))}
+                {withdrawError && (
+                  <p className="text-xs" style={{ color: "#f87171" }}>{withdrawError}</p>
+                )}
+                <button
+                  onClick={handleWithdraw}
+                  disabled={withdrawing}
+                  className="w-full py-3 rounded-xl text-white font-semibold text-sm mt-2 disabled:opacity-50"
+                  style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)" }}
+                >
+                  {withdrawing ? "처리 중..." : "신청하기"}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* 인증서 모달 */}
       {certItem && (

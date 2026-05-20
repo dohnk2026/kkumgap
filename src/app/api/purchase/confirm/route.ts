@@ -3,7 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
 export async function POST(request: NextRequest) {
@@ -14,14 +14,35 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "필수 파라미터가 없습니다." }, { status: 400 });
     }
 
-    const { error } = await supabase
+    const { data: tx, error: txErr } = await supabase
       .from("transactions")
-      .update({ confirmed_at: new Date().toISOString() })
+      .select("seller_id, seller_amount, confirmed_at")
       .eq("id", transactionId)
       .eq("buyer_id", buyerId)
-      .eq("status", "완료");
+      .eq("status", "완료")
+      .single();
 
-    if (error) throw error;
+    if (txErr || !tx) {
+      return NextResponse.json({ error: "거래를 찾을 수 없습니다." }, { status: 404 });
+    }
+
+    if (tx.confirmed_at) {
+      return NextResponse.json({ success: true });
+    }
+
+    const [confirmRes, balanceRes] = await Promise.all([
+      supabase
+        .from("transactions")
+        .update({ confirmed_at: new Date().toISOString() })
+        .eq("id", transactionId),
+      supabase.rpc("increment_balance", {
+        p_user_id: tx.seller_id,
+        p_amount: tx.seller_amount,
+      }),
+    ]);
+
+    if (confirmRes.error) throw confirmRes.error;
+    if (balanceRes.error) throw balanceRes.error;
 
     return NextResponse.json({ success: true });
   } catch (err) {
