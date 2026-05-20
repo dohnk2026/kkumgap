@@ -59,9 +59,17 @@ export default function Header({ secondaryHref, secondaryLabel }: Props) {
         {!loading && (
           user ? (
             <div className="flex items-center gap-2">
-              <span className="text-sm hidden sm:block" style={{ color: "#c4b5fd" }}>
-                {profile?.nickname}
-              </span>
+              <Link
+                href="/mypage"
+                className="text-sm hidden sm:block px-3 py-1.5 rounded-full transition-all"
+                style={{
+                  background: "rgba(124, 58, 237, 0.15)",
+                  color: "#c4b5fd",
+                  border: "1px solid rgba(124, 58, 237, 0.25)",
+                }}
+              >
+                {profile?.nickname ?? "마이페이지"}
+              </Link>
               <button
                 onClick={handleSignOut}
                 className="text-xs px-3 py-1.5 rounded-full transition-all"
