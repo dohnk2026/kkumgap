@@ -55,6 +55,10 @@ export default function MyPage() {
   const router = useRouter();
 
   const [activeTab, setActiveTab] = useState<Tab>("selling");
+  const [editingNickname, setEditingNickname] = useState(false);
+  const [nicknameInput, setNicknameInput] = useState("");
+  const [nicknameSaving, setNicknameSaving] = useState(false);
+  const [nicknameError, setNicknameError] = useState("");
   const [myDreams, setMyDreams] = useState<Dream[]>([]);
   const [purchases, setPurchases] = useState<PurchasedItem[]>([]);
   const [receivedGifts, setReceivedGifts] = useState<ReceivedGift[]>([]);
@@ -177,6 +181,22 @@ export default function MyPage() {
     }
   };
 
+  const handleNicknameSave = async () => {
+    const trimmed = nicknameInput.trim();
+    if (!trimmed) { setNicknameError("닉네임을 입력해주세요."); return; }
+    if (trimmed.length > 10) { setNicknameError("10자 이내로 입력해주세요."); return; }
+    setNicknameSaving(true);
+    setNicknameError("");
+    const { error } = await supabase.from("users").update({ nickname: trimmed }).eq("id", user!.id);
+    if (error) {
+      setNicknameError("저장에 실패했어요.");
+    } else {
+      setEditingNickname(false);
+      window.location.reload();
+    }
+    setNicknameSaving(false);
+  };
+
   const handleClaimGift = async (giftId: string, dreamId: string, alreadyClaimed: boolean) => {
     if (!alreadyClaimed) {
       await supabase
@@ -226,8 +246,36 @@ export default function MyPage() {
             >
               🌙
             </div>
-            <div>
-              <p className="font-bold text-white text-lg">{profile?.nickname ?? "익명"}</p>
+            <div className="flex-1 min-w-0">
+              {editingNickname ? (
+                <div className="flex items-center gap-2">
+                  <input
+                    autoFocus
+                    value={nicknameInput}
+                    onChange={(e) => setNicknameInput(e.target.value.slice(0, 10))}
+                    onKeyDown={(e) => { if (e.key === "Enter") handleNicknameSave(); if (e.key === "Escape") setEditingNickname(false); }}
+                    placeholder="새 닉네임"
+                    className="flex-1 min-w-0 px-3 py-1.5 rounded-lg text-sm text-white outline-none"
+                    style={{ background: "rgba(15,8,40,0.8)", border: "1px solid rgba(124,58,237,0.5)" }}
+                  />
+                  <button onClick={handleNicknameSave} disabled={nicknameSaving} className="text-xs px-2.5 py-1.5 rounded-lg font-medium" style={{ background: "rgba(124,58,237,0.4)", color: "#c4b5fd" }}>
+                    {nicknameSaving ? "..." : "저장"}
+                  </button>
+                  <button onClick={() => setEditingNickname(false)} className="text-xs px-2 py-1.5 rounded-lg" style={{ color: "rgba(167,139,250,0.5)" }}>✕</button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <p className="font-bold text-white text-lg">{profile?.nickname ?? "익명"}</p>
+                  <button
+                    onClick={() => { setNicknameInput(profile?.nickname ?? ""); setNicknameError(""); setEditingNickname(true); }}
+                    className="text-xs px-2 py-0.5 rounded-md"
+                    style={{ color: "rgba(167,139,250,0.5)", border: "1px solid rgba(124,58,237,0.2)" }}
+                  >
+                    수정
+                  </button>
+                </div>
+              )}
+              {nicknameError && <p className="text-xs mt-1" style={{ color: "#f87171" }}>{nicknameError}</p>}
               <p className="text-sm" style={{ color: "rgba(167,139,250,0.7)" }}>{user?.email}</p>
             </div>
           </div>
