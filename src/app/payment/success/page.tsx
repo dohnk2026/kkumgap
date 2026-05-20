@@ -13,7 +13,7 @@ interface DreamData {
   category: string;
   price: number;
   lucky_numbers: number[] | null;
-  users: { nickname: string } | null;
+  users: { nickname: string; tag: string } | null;
 }
 
 function SuccessContent() {
@@ -214,7 +214,9 @@ function SuccessContent() {
           <CertificateCard
             dreamTitle={dream?.title ?? ""}
             buyerNickname={profile?.nickname ?? ""}
+            buyerTag={profile?.tag}
             sellerNickname={dream?.users?.nickname ?? ""}
+            sellerTag={dream?.users?.tag}
             amount={amount}
             date={new Date().toISOString()}
             transactionId={transactionId}

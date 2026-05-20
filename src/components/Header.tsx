@@ -68,7 +68,7 @@ export default function Header({ secondaryHref, secondaryLabel }: Props) {
                   border: "1px solid rgba(124, 58, 237, 0.25)",
                 }}
               >
-                {profile?.nickname ?? "마이페이지"}
+                {profile?.nickname ?? "마이페이지"}{profile?.tag && <span style={{ opacity: 0.55, fontSize: "0.7em" }}> #{profile.tag}</span>}
               </Link>
               <button
                 onClick={handleSignOut}

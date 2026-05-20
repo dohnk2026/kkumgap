@@ -13,7 +13,7 @@ type PurchasedItem = {
   price: number;
   created_at: string;
   confirmed_at: string | null;
-  dreams: { id: string; title: string; category: string; users: { nickname: string } | null } | null;
+  dreams: { id: string; title: string; category: string; users: { nickname: string; tag: string } | null } | null;
 };
 
 type ReceivedGift = {
@@ -81,7 +81,7 @@ export default function MyPage() {
           .order("created_at", { ascending: false }),
         supabase
           .from("transactions")
-          .select("id, price, created_at, confirmed_at, dreams(id, title, category, users(nickname))")
+          .select("id, price, created_at, confirmed_at, dreams(id, title, category, users(nickname, tag))")
           .eq("buyer_id", user!.id)
           .eq("status", "완료")
           .order("created_at", { ascending: false }),
@@ -273,7 +273,10 @@ export default function MyPage() {
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
-                  <p className="font-bold text-white text-lg">{profile?.nickname ?? "익명"}</p>
+                  <p className="font-bold text-white text-lg">
+                    {profile?.nickname ?? "익명"}
+                    {profile?.tag && <span className="font-normal text-sm" style={{ color: "rgba(167,139,250,0.5)" }}> #{profile.tag}</span>}
+                  </p>
                   <button
                     onClick={() => { setNicknameInput(profile?.nickname ?? ""); setNicknameError(""); setEditingNickname(true); }}
                     className="text-xs px-2 py-0.5 rounded-md"
@@ -529,7 +532,9 @@ export default function MyPage() {
             <CertificateCard
               dreamTitle={certItem.dreams?.title ?? "삭제된 꿈"}
               buyerNickname={profile?.nickname ?? ""}
+              buyerTag={profile?.tag}
               sellerNickname={certItem.dreams?.users?.nickname ?? ""}
+              sellerTag={certItem.dreams?.users?.tag ?? undefined}
               amount={certItem.price}
               date={certItem.created_at}
               transactionId={certItem.id}

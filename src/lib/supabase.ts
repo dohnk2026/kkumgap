@@ -9,6 +9,7 @@ export type User = {
   id: string;
   email: string | null;
   nickname: string;
+  tag: string;
   created_at: string;
 };
 

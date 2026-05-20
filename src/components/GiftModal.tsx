@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from "react";
 interface UserResult {
   id: string;
   nickname: string;
+  tag: string;
 }
 
 interface GiftModalProps {
@@ -52,7 +53,7 @@ export default function GiftModal({
 
   const handleSelectUser = (u: UserResult) => {
     setSelected(u);
-    setQuery(u.nickname);
+    setQuery(`${u.nickname}#${u.tag}`);
     setResults([]);
     setError(null);
   };
@@ -61,7 +62,7 @@ export default function GiftModal({
     if (!selected) { setError("받는 사람을 선택해주세요."); return; }
 
     if (giftType === "purchased") {
-      onProceedPayment?.(selected.id, selected.nickname, message);
+      onProceedPayment?.(selected.id, `${selected.nickname}#${selected.tag}`, message);
       return;
     }
 
@@ -100,7 +101,7 @@ export default function GiftModal({
             <p className="text-5xl mb-4" style={{ animation: "float 2s ease-in-out infinite" }}>🎁</p>
             <p className="text-white font-bold text-lg mb-1">선물 완료!</p>
             <p className="text-sm" style={{ color: "#a78bfa" }}>
-              {selected?.nickname}님에게 꿈을 선물했어요
+              {selected?.nickname}#{selected?.tag}님에게 꿈을 선물했어요
             </p>
           </div>
         ) : (
@@ -134,14 +135,14 @@ export default function GiftModal({
             {/* 닉네임 검색 */}
             <div className="mb-4">
               <label className="block text-xs font-medium mb-1.5" style={{ color: "#c4b5fd" }}>
-                받는 사람 닉네임
+                받는 사람 <span style={{ color: "rgba(167,139,250,0.5)", fontWeight: 400 }}>닉네임 또는 닉네임#태그</span>
               </label>
               <div className="relative">
                 <input
                   type="text"
                   value={query}
                   onChange={(e) => { setQuery(e.target.value); setSelected(null); }}
-                  placeholder="닉네임을 입력하세요"
+                  placeholder="꿈꾸미 또는 꿈꾸미#1234"
                   className="w-full px-4 py-3 rounded-xl text-white text-sm outline-none"
                   style={{ background: "rgba(15,8,40,0.8)", border: `1px solid ${selected ? "rgba(124,58,237,0.6)" : "rgba(124,58,237,0.3)"}` }}
                 />
@@ -167,12 +168,13 @@ export default function GiftModal({
                       <button
                         key={u.id}
                         onClick={() => handleSelectUser(u)}
-                        className="w-full px-4 py-3 text-left text-sm transition-all"
+                        className="w-full px-4 py-3 text-left text-sm transition-all flex items-center justify-between"
                         style={{ color: "#e2e8f0", borderBottom: "1px solid rgba(124,58,237,0.1)" }}
                         onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(124,58,237,0.15)")}
                         onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                       >
-                        🌙 {u.nickname}
+                        <span>🌙 {u.nickname}</span>
+                        <span className="text-xs" style={{ color: "rgba(167,139,250,0.6)" }}>#{u.tag}</span>
                       </button>
                     ))
                   )}

@@ -9,7 +9,7 @@ import GiftModal from "@/components/GiftModal";
 import CertificateCard from "@/components/CertificateCard";
 import { useAuth } from "@/lib/auth-context";
 
-type DreamWithSeller = Dream & { users: { nickname: string } | null };
+type DreamWithSeller = Dream & { users: { nickname: string; tag: string } | null };
 
 function timeAgo(date: string) {
   const diff = Date.now() - new Date(date).getTime();
@@ -40,7 +40,7 @@ export default function MarketDreamPage() {
     async function fetchDream() {
       const { data, error } = await supabase
         .from("dreams")
-        .select("*, users(nickname)")
+        .select("*, users(nickname, tag)")
         .eq("id", id)
         .single();
       if (!error && data) setDream(data as DreamWithSeller);
@@ -201,7 +201,7 @@ export default function MarketDreamPage() {
 
         <h1 className="text-2xl font-bold text-white mb-1 leading-snug">{dream.title}</h1>
         <p className="text-sm mb-6" style={{ color: "rgba(148,163,184,0.6)" }}>
-          by {dream.users?.nickname ?? "익명"}
+          by {dream.users?.nickname ?? "익명"}{dream.users?.tag && <span style={{ opacity: 0.6 }}> #{dream.users.tag}</span>}
         </p>
 
         {/* 꿈 내용 */}
@@ -218,7 +218,9 @@ export default function MarketDreamPage() {
             <CertificateCard
               dreamTitle={dream.title}
               buyerNickname={profile?.nickname ?? ""}
+              buyerTag={profile?.tag}
               sellerNickname={dream.users?.nickname ?? ""}
+              sellerTag={dream.users?.tag}
               amount={purchaseTx.price}
               date={purchaseTx.created_at}
               transactionId={purchaseTx.id}

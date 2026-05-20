@@ -3,13 +3,15 @@
 interface Props {
   dreamTitle: string;
   buyerNickname: string;
+  buyerTag?: string;
   sellerNickname: string;
+  sellerTag?: string;
   amount: number;
   date: string;
   transactionId?: string;
 }
 
-export default function CertificateCard({ dreamTitle, buyerNickname, sellerNickname, amount, date, transactionId }: Props) {
+export default function CertificateCard({ dreamTitle, buyerNickname, buyerTag, sellerNickname, sellerTag, amount, date, transactionId }: Props) {
   const formattedDate = new Date(date).toLocaleDateString("ko-KR", {
     year: "numeric", month: "long", day: "numeric",
   });
@@ -40,11 +42,17 @@ export default function CertificateCard({ dreamTitle, buyerNickname, sellerNickn
         <div className="grid grid-cols-2 gap-x-4 gap-y-3.5 text-left mb-5 px-2">
           <div>
             <p className="text-xs mb-0.5" style={{ color: "rgba(253,230,138,0.5)" }}>구매자</p>
-            <p className="text-sm font-semibold text-white">{buyerNickname || "—"}</p>
+            <p className="text-sm font-semibold text-white">
+              {buyerNickname || "—"}
+              {buyerTag && <span className="font-normal" style={{ color: "rgba(253,230,138,0.5)" }}> #{buyerTag}</span>}
+            </p>
           </div>
           <div>
             <p className="text-xs mb-0.5" style={{ color: "rgba(253,230,138,0.5)" }}>판매자</p>
-            <p className="text-sm font-semibold text-white">{sellerNickname || "—"}</p>
+            <p className="text-sm font-semibold text-white">
+              {sellerNickname || "—"}
+              {sellerTag && <span className="font-normal" style={{ color: "rgba(253,230,138,0.5)" }}> #{sellerTag}</span>}
+            </p>
           </div>
           <div>
             <p className="text-xs mb-0.5" style={{ color: "rgba(253,230,138,0.5)" }}>거래일</p>

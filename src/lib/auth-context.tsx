@@ -6,6 +6,7 @@ import { supabase } from "./supabase";
 
 interface UserProfile {
   nickname: string;
+  tag: string;
 }
 
 interface AuthContextType {
@@ -30,7 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function fetchProfile(userId: string, accessToken?: string) {
     const { data } = await supabase
       .from("users")
-      .select("nickname")
+      .select("nickname, tag")
       .eq("id", userId)
       .single();
     if (data) {
@@ -42,8 +43,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       if (res.ok) {
-        const { nickname } = await res.json();
-        setProfile({ nickname });
+        const { nickname, tag } = await res.json();
+        setProfile({ nickname, tag: tag ?? "0000" });
       }
     }
   }

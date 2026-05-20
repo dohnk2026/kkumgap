@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     // 꿈 정보 조회
     const { data: dream, error: dreamErr } = await supabase
       .from("dreams")
-      .select("seller_id, price, status, title, content, interpretation, category, lucky_numbers, users(nickname)")
+      .select("seller_id, price, status, title, content, interpretation, category, lucky_numbers, users(nickname, tag)")
       .eq("id", dreamId)
       .single();
 
