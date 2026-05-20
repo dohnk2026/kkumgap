@@ -24,6 +24,16 @@ export async function PATCH(request: NextRequest) {
   const { data: { user }, error: authErr } = await anonSupabase.auth.getUser(token);
   if (authErr || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  // 중복 닉네임 확인
+  const { data: existing } = await serviceSupabase
+    .from("users")
+    .select("id")
+    .eq("nickname", trimmed)
+    .neq("id", user.id)
+    .maybeSingle();
+
+  if (existing) return NextResponse.json({ error: "이미 사용 중인 닉네임이에요." }, { status: 409 });
+
   // Use service role to bypass RLS
   const { error } = await serviceSupabase
     .from("users")
