@@ -3,9 +3,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
 const client = new Anthropic();
+// 서비스 롤 키: RLS 우회하여 로그 카운트/삽입 신뢰성 확보
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
 const SYSTEM_PROMPT = `너는 '몽해(夢解)' — 꿈값 서비스의 수석 해몽사이자 꿈 연구가.
