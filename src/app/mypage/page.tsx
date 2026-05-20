@@ -13,7 +13,7 @@ type PurchasedItem = {
   price: number;
   created_at: string;
   confirmed_at: string | null;
-  dreams: { id: string; title: string; category: string; users: { nickname: string; tag: string } | null } | null;
+  dreams: { id: string; title: string; category: string; image_url: string | null; users: { nickname: string; tag: string } | null } | null;
 };
 
 type ReceivedGift = {
@@ -94,7 +94,7 @@ export default function MyPage() {
           .order("created_at", { ascending: false }),
         supabase
           .from("transactions")
-          .select("id, price, created_at, confirmed_at, dreams(id, title, category, users(nickname, tag))")
+          .select("id, price, created_at, confirmed_at, dreams(id, title, category, image_url, users(nickname, tag))")
           .eq("buyer_id", user!.id)
           .eq("status", "완료")
           .order("created_at", { ascending: false }),
@@ -465,7 +465,20 @@ export default function MyPage() {
           ) : (
             <div className="space-y-3">
               {purchases.map((item) => (
-                <div key={item.id} className="rounded-2xl p-4" style={{ background: "rgba(15,8,40,0.8)", border: "1px solid rgba(124,58,237,0.2)" }}>
+                <div key={item.id} className="rounded-2xl overflow-hidden" style={{ background: "rgba(15,8,40,0.8)", border: "1px solid rgba(124,58,237,0.2)" }}>
+                  {item.dreams?.image_url && (
+                    <div
+                      className="cursor-pointer"
+                      onClick={() => router.push(item.dreams ? `/market/${item.dreams.id}` : "/market")}
+                    >
+                      <img
+                        src={item.dreams.image_url}
+                        alt={item.dreams.title}
+                        className="w-full h-40 object-cover"
+                      />
+                    </div>
+                  )}
+                  <div className="p-4">
                   <div className="cursor-pointer" onClick={() => router.push(item.dreams ? `/market/${item.dreams.id}` : "/market")}>
                     <div className="flex items-start justify-between gap-3 mb-2">
                       <h3 className="font-semibold text-sm leading-snug line-clamp-1 flex-1" style={{ color: "#f1f5f9" }}>{item.dreams?.title ?? "삭제된 꿈"}</h3>
@@ -495,6 +508,7 @@ export default function MyPage() {
                       인증서
                     </button>
                   </div>
+                </div>
                 </div>
               ))}
             </div>

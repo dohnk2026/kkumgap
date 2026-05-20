@@ -36,6 +36,9 @@ function SuccessContent() {
   const [errorMsg, setErrorMsg] = useState("");
   const [isGift, setIsGift] = useState(false);
   const [recipientNickname, setRecipientNickname] = useState("");
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [imageLoading, setImageLoading] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -78,6 +81,10 @@ function SuccessContent() {
 
         if (data.dream) setDream(data.dream as DreamData);
         setStatus("success");
+
+        if (!giftData) {
+          generateDreamImage(dreamId);
+        }
       } catch (err) {
         setErrorMsg(err instanceof Error ? err.message : "결제 처리 중 오류가 발생했습니다.");
         setStatus("error");
@@ -86,6 +93,28 @@ function SuccessContent() {
 
     confirm();
   }, [authLoading, user, paymentKey, orderId, amount, dreamId, router]);
+
+  async function generateDreamImage(id: string) {
+    setImageLoading(true);
+    setImageError(false);
+    try {
+      const res = await fetch("/api/dream-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dreamId: id }),
+      });
+      const data = await res.json();
+      if (res.ok && data.imageUrl) {
+        setImageUrl(data.imageUrl);
+      } else {
+        setImageError(true);
+      }
+    } catch {
+      setImageError(true);
+    } finally {
+      setImageLoading(false);
+    }
+  }
 
   const handleConfirm = async () => {
     if (!transactionId || !user) return;
@@ -208,6 +237,48 @@ function SuccessContent() {
         )}
 
         {!isGift && (<>
+
+        {/* AI 꿈 그림 */}
+        <div className="mb-6">
+          {imageLoading && (
+            <div
+              className="w-full aspect-square rounded-2xl flex flex-col items-center justify-center gap-3"
+              style={{ background: "linear-gradient(135deg, rgba(109,40,217,0.2), rgba(67,56,202,0.2))", border: "1px solid rgba(124,58,237,0.3)" }}
+            >
+              <div
+                className="w-12 h-12 rounded-full flex items-center justify-center text-2xl"
+                style={{ background: "rgba(124,58,237,0.2)", animation: "float 2s ease-in-out infinite" }}
+              >
+                🎨
+              </div>
+              <p className="text-sm font-medium" style={{ color: "#c4b5fd" }}>꿈의 장면을 그리는 중...</p>
+              <p className="text-xs" style={{ color: "rgba(167,139,250,0.5)" }}>약 20~30초 소요됩니다</p>
+            </div>
+          )}
+          {!imageLoading && imageUrl && (
+            <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(124,58,237,0.3)" }}>
+              <img src={imageUrl} alt="AI가 그린 꿈 장면" className="w-full aspect-square object-cover" />
+              <div className="px-4 py-2 text-center" style={{ background: "rgba(15,8,40,0.8)" }}>
+                <p className="text-xs" style={{ color: "rgba(167,139,250,0.6)" }}>🎨 AI가 그린 꿈의 장면</p>
+              </div>
+            </div>
+          )}
+          {!imageLoading && imageError && (
+            <div
+              className="w-full py-8 rounded-2xl flex flex-col items-center gap-3"
+              style={{ background: "rgba(15,8,40,0.6)", border: "1px solid rgba(124,58,237,0.2)" }}
+            >
+              <p className="text-sm" style={{ color: "rgba(167,139,250,0.6)" }}>이미지 생성에 실패했습니다</p>
+              <button
+                onClick={() => generateDreamImage(dreamId)}
+                className="px-4 py-2 rounded-xl text-sm font-medium"
+                style={{ background: "rgba(124,58,237,0.2)", color: "#c4b5fd", border: "1px solid rgba(124,58,237,0.3)" }}
+              >
+                다시 생성
+              </button>
+            </div>
+          )}
+        </div>
 
         {/* 인증서 */}
         <div className="mb-6">

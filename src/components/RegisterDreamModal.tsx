@@ -13,6 +13,7 @@ interface Interpretation {
   price: number;
   luckyNumbers: number[];
   marketQuestion: string;
+  image_prompt?: string;
 }
 
 interface Props {
@@ -49,6 +50,7 @@ export default function RegisterDreamModal({ dream, result, onClose }: Props) {
           category: result.category,
           price,
           lucky_numbers: result.luckyNumbers,
+          image_prompt: result.image_prompt ?? null,
           status: "판매중",
         })
         .select("id")

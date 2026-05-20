@@ -212,6 +212,29 @@ export default function MarketDreamPage() {
           </p>
         </div>
 
+        {/* AI 꿈 그림 — 구매/선물/판매자만 표시 */}
+        {showFull && dream.image_url && (
+          <div className="mb-6 rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(124,58,237,0.3)" }}>
+            <img src={dream.image_url} alt="AI가 그린 꿈 장면" className="w-full aspect-square object-cover" />
+            <div className="px-4 py-2 text-center" style={{ background: "rgba(15,8,40,0.8)" }}>
+              <p className="text-xs" style={{ color: "rgba(167,139,250,0.6)" }}>🎨 AI가 그린 꿈의 장면</p>
+            </div>
+          </div>
+        )}
+
+        {/* AI 이미지 구매 유도 배너 — 미구매자에게만 */}
+        {!showFull && !isSold && (
+          <div
+            className="rounded-2xl p-4 mb-6 flex items-center gap-3"
+            style={{ background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.2)" }}
+          >
+            <span className="text-2xl shrink-0">🎨</span>
+            <p className="text-sm" style={{ color: "rgba(167,139,250,0.8)" }}>
+              구매 시 <span style={{ color: "#c4b5fd", fontWeight: 600 }}>AI가 이 꿈을 그림으로 그려드려요</span>
+            </p>
+          </div>
+        )}
+
         {/* 소유 인증서 */}
         {hasPurchasedForSelf && purchaseTx && (
           <div className="mb-6">

@@ -15,6 +15,7 @@ interface Interpretation {
   price: number;
   luckyNumbers: number[];
   marketQuestion: string;
+  image_prompt?: string;
 }
 
 const CATEGORY_EMOJI: Record<string, string> = {
@@ -353,6 +354,17 @@ function InterpretContent() {
               💬 &ldquo;{result.marketQuestion}&rdquo;
             </p>
           )}
+        </div>
+
+        {/* AI 이미지 안내 */}
+        <div
+          className="rounded-2xl p-4 mb-6 flex items-center gap-3"
+          style={{ background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.2)" }}
+        >
+          <span className="text-2xl shrink-0">🎨</span>
+          <p className="text-sm" style={{ color: "rgba(167,139,250,0.8)" }}>
+            꿈시장에 등록하면 구매자에게 <span style={{ color: "#c4b5fd", fontWeight: 600 }}>AI 꿈 그림</span>이 제공됩니다
+          </p>
         </div>
 
         <div className="space-y-3">
