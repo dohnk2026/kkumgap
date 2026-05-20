@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { supabase, Dream } from "@/lib/supabase";
 import Header from "@/components/Header";
 import GiftModal from "@/components/GiftModal";
+import CertificateCard from "@/components/CertificateCard";
 import { useAuth } from "@/lib/auth-context";
 
 type DreamWithSeller = Dream & { users: { nickname: string } | null };
@@ -28,6 +29,7 @@ export default function MarketDreamPage() {
   const [loading, setLoading] = useState(true);
   const [hasPurchasedForSelf, setHasPurchasedForSelf] = useState(false);
   const [hasGiftAccess, setHasGiftAccess] = useState(false);
+  const [purchaseTx, setPurchaseTx] = useState<{ id: string; price: number; created_at: string } | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
   const [showGiftModal, setShowGiftModal] = useState(false);
   const [showFreeGiftModal, setShowFreeGiftModal] = useState(false);
@@ -56,11 +58,13 @@ export default function MarketDreamPage() {
 
     async function checkAccess() {
       const [txRes, giftSentRes, giftReceivedRes] = await Promise.all([
-        supabase.from("transactions").select("id").eq("dream_id", id).eq("buyer_id", user!.id).maybeSingle(),
+        supabase.from("transactions").select("id, price, created_at").eq("dream_id", id).eq("buyer_id", user!.id).maybeSingle(),
         supabase.from("gifts").select("id").eq("dream_id", id).eq("sender_id", user!.id).eq("gift_type", "purchased").maybeSingle(),
         supabase.from("gifts").select("id").eq("dream_id", id).eq("recipient_id", user!.id).maybeSingle(),
       ]);
-      setHasPurchasedForSelf(!!txRes.data && !giftSentRes.data);
+      const bought = !!txRes.data && !giftSentRes.data;
+      setHasPurchasedForSelf(bought);
+      if (bought && txRes.data) setPurchaseTx(txRes.data as { id: string; price: number; created_at: string });
       setHasGiftAccess(!!giftReceivedRes.data);
     }
 
@@ -208,109 +212,86 @@ export default function MarketDreamPage() {
           </p>
         </div>
 
-        {/* 해석 영역 */}
-        {showFull ? (
-          <div className="space-y-4 mb-8">
-            <div className="glass-card rounded-2xl p-5">
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-lg">🔮</span>
-                <h2 className="font-semibold text-white">전통 해몽</h2>
-              </div>
-              <p className="text-sm leading-relaxed" style={{ color: "#cbd5e1", whiteSpace: "pre-wrap" }}>{traditional}</p>
-            </div>
-
-            <div className="glass-card rounded-2xl p-5">
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-lg">🧠</span>
-                <h2 className="font-semibold text-white">심리 해석</h2>
-              </div>
-              <p className="text-sm leading-relaxed" style={{ color: "#cbd5e1", whiteSpace: "pre-wrap" }}>{psychological}</p>
-            </div>
-
-            {advice && (
-              <div className="glass-card rounded-2xl p-5">
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="text-lg">🎯</span>
-                  <h2 className="font-semibold text-white">몽해 할머니의 조언</h2>
-                </div>
-                <p className="text-sm leading-relaxed" style={{ color: "#cbd5e1", whiteSpace: "pre-wrap" }}>{advice}</p>
-              </div>
-            )}
-
-            <div className="glass-card rounded-2xl p-5">
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-lg">💰</span>
-                <h2 className="font-semibold text-white">감정가</h2>
-              </div>
-              <p
-                className="text-2xl font-bold"
-                style={{
-                  background: "linear-gradient(135deg, #fde68a, #fbbf24)",
-                  backgroundClip: "text",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                }}
-              >
-                ₩{dream.price.toLocaleString("ko-KR")}
-              </p>
-            </div>
-
-            {dream.lucky_numbers && dream.lucky_numbers.length > 0 && (
-              <div className="glass-card rounded-2xl p-5">
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="text-lg">🍀</span>
-                  <h2 className="font-semibold text-white">행운의 숫자</h2>
-                </div>
-                <div className="flex gap-3">
-                  {dream.lucky_numbers.map((n) => (
-                    <span
-                      key={n}
-                      className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold"
-                      style={{ background: "rgba(124,58,237,0.3)", color: "#c4b5fd", border: "1px solid rgba(124,58,237,0.5)" }}
-                    >
-                      {n}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
+        {/* 소유 인증서 */}
+        {hasPurchasedForSelf && purchaseTx && (
+          <div className="mb-6">
+            <CertificateCard
+              dreamTitle={dream.title}
+              buyerNickname={profile?.nickname ?? ""}
+              sellerNickname={dream.users?.nickname ?? ""}
+              amount={purchaseTx.price}
+              date={purchaseTx.created_at}
+              transactionId={purchaseTx.id}
+            />
           </div>
-        ) : (
-          <div className="glass-card rounded-2xl p-5 mb-8">
-            <p className="text-xs font-medium mb-3" style={{ color: "rgba(167,139,250,0.7)" }}>🔮 해석 미리보기</p>
-            <div className="relative rounded-xl overflow-hidden" style={{ minHeight: "90px" }}>
-              <p
-                className="text-sm leading-relaxed p-3"
-                style={{ color: "#cbd5e1", filter: "blur(7px)", userSelect: "none" }}
-              >
-                {dream.interpretation.slice(0, 80)}...
-              </p>
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <p className="text-2xl mb-1">🔒</p>
-                <p className="text-sm font-medium" style={{ color: "#c4b5fd" }}>
-                  구매 또는 선물로 전체 해석을 확인하세요
-                </p>
-              </div>
+        )}
+
+        {/* 해석 영역 */}
+        <div className="space-y-4 mb-8">
+          <div className="glass-card rounded-2xl p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-lg">🔮</span>
+              <h2 className="font-semibold text-white">전통 해몽</h2>
             </div>
-            <div
-              className="mt-4 p-3 rounded-xl"
-              style={{ background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.2)" }}
+            <p className="text-sm leading-relaxed" style={{ color: "#cbd5e1", whiteSpace: "pre-wrap" }}>{traditional}</p>
+          </div>
+
+          <div className="glass-card rounded-2xl p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-lg">🧠</span>
+              <h2 className="font-semibold text-white">심리 해석</h2>
+            </div>
+            <p className="text-sm leading-relaxed" style={{ color: "#cbd5e1", whiteSpace: "pre-wrap" }}>{psychological}</p>
+          </div>
+
+          {advice && (
+            <div className="glass-card rounded-2xl p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-lg">🎯</span>
+                <h2 className="font-semibold text-white">몽해 할머니의 조언</h2>
+              </div>
+              <p className="text-sm leading-relaxed" style={{ color: "#cbd5e1", whiteSpace: "pre-wrap" }}>{advice}</p>
+            </div>
+          )}
+
+          <div className="glass-card rounded-2xl p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-lg">💰</span>
+              <h2 className="font-semibold text-white">감정가</h2>
+            </div>
+            <p
+              className="text-2xl font-bold"
+              style={{
+                background: "linear-gradient(135deg, #fde68a, #fbbf24)",
+                backgroundClip: "text",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+              }}
             >
-              <p className="text-xs mb-2" style={{ color: "rgba(167,139,250,0.6)" }}>구매하면 볼 수 있는 내용</p>
-              <div className="flex flex-wrap gap-1.5">
-                {["🔮 전통 해몽", "🧠 심리 해석", "🎯 조언", "💰 감정가", "🍀 행운의 숫자"].map((item) => (
+              ₩{dream.price.toLocaleString("ko-KR")}
+            </p>
+          </div>
+
+          {dream.lucky_numbers && dream.lucky_numbers.length > 0 && (
+            <div className="glass-card rounded-2xl p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-lg">🍀</span>
+                <h2 className="font-semibold text-white">행운의 숫자</h2>
+              </div>
+              <div className="flex gap-3">
+                {dream.lucky_numbers.map((n) => (
                   <span
-                    key={item}
-                    className="text-xs px-2.5 py-1 rounded-full"
-                    style={{ background: "rgba(124,58,237,0.15)", color: "#c4b5fd", border: "1px solid rgba(124,58,237,0.2)" }}
+                    key={n}
+                    className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold"
+                    style={{ background: "rgba(124,58,237,0.3)", color: "#c4b5fd", border: "1px solid rgba(124,58,237,0.5)" }}
                   >
-                    {item}
+                    {n}
                   </span>
                 ))}
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* 하단 바 */}
@@ -410,7 +391,7 @@ export default function MarketDreamPage() {
               <p className="text-3xl font-black mb-1" style={{ background: "linear-gradient(135deg, #fde68a, #fbbf24)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
                 ₩{dream.price.toLocaleString("ko-KR")}
               </p>
-              <p className="text-xs" style={{ color: "rgba(167,139,250,0.5)" }}>구매 후 전체 해몽 공개 · 테스트 모드</p>
+              <p className="text-xs" style={{ color: "rgba(167,139,250,0.5)" }}>꿈을 소유하고 인증서를 받아요 · 테스트 모드</p>
             </div>
             <div className="space-y-2">
               <button onClick={confirmPurchase} className="btn-glow w-full py-3.5 rounded-xl text-white font-semibold" style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)" }}>결제하기</button>

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
+import CertificateCard from "@/components/CertificateCard";
 import { useAuth } from "@/lib/auth-context";
 import { supabase, Dream } from "@/lib/supabase";
 
@@ -12,7 +13,7 @@ type PurchasedItem = {
   price: number;
   created_at: string;
   confirmed_at: string | null;
-  dreams: { id: string; title: string; category: string } | null;
+  dreams: { id: string; title: string; category: string; users: { nickname: string } | null } | null;
 };
 
 type ReceivedGift = {
@@ -55,6 +56,7 @@ export default function MyPage() {
   const router = useRouter();
 
   const [activeTab, setActiveTab] = useState<Tab>("selling");
+  const [certItem, setCertItem] = useState<PurchasedItem | null>(null);
   const [editingNickname, setEditingNickname] = useState(false);
   const [nicknameInput, setNicknameInput] = useState("");
   const [nicknameSaving, setNicknameSaving] = useState(false);
@@ -79,7 +81,7 @@ export default function MyPage() {
           .order("created_at", { ascending: false }),
         supabase
           .from("transactions")
-          .select("id, price, created_at, confirmed_at, dreams(id, title, category)")
+          .select("id, price, created_at, confirmed_at, dreams(id, title, category, users(nickname))")
           .eq("buyer_id", user!.id)
           .eq("status", "완료")
           .order("created_at", { ascending: false }),
@@ -187,9 +189,15 @@ export default function MyPage() {
     if (trimmed.length > 10) { setNicknameError("10자 이내로 입력해주세요."); return; }
     setNicknameSaving(true);
     setNicknameError("");
-    const { error } = await supabase.from("users").update({ nickname: trimmed }).eq("id", user!.id);
-    if (error) {
-      setNicknameError("저장에 실패했어요.");
+    const { data: { session } } = await supabase.auth.getSession();
+    const res = await fetch("/api/user/nickname", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${session?.access_token ?? ""}` },
+      body: JSON.stringify({ nickname: trimmed }),
+    });
+    if (!res.ok) {
+      const data = await res.json();
+      setNicknameError(data.error ?? "저장에 실패했어요.");
     } else {
       setEditingNickname(false);
       window.location.reload();
@@ -392,11 +400,20 @@ export default function MyPage() {
                       </div>
                     </div>
                   </div>
-                  {!item.confirmed_at && (
-                    <button onClick={() => handleConfirmPurchase(item.id)} className="w-full mt-3 py-2 rounded-xl text-sm font-medium" style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)", color: "white" }}>
-                      구매 확정하기
+                  <div className="flex gap-2 mt-3">
+                    {!item.confirmed_at && (
+                      <button onClick={() => handleConfirmPurchase(item.id)} className="flex-1 py-2 rounded-xl text-sm font-medium" style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)", color: "white" }}>
+                        구매 확정하기
+                      </button>
+                    )}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setCertItem(item); }}
+                      className="px-4 py-2 rounded-xl text-sm font-medium shrink-0"
+                      style={{ background: "rgba(253,230,138,0.08)", border: "1px solid rgba(253,230,138,0.25)", color: "#fde68a" }}
+                    >
+                      인증서
                     </button>
-                  )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -503,6 +520,30 @@ export default function MyPage() {
           )
         )}
       </div>
+
+      {/* 인증서 모달 */}
+      {certItem && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-4 pb-6 sm:pb-0">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setCertItem(null)} />
+          <div className="relative w-full max-w-sm">
+            <CertificateCard
+              dreamTitle={certItem.dreams?.title ?? "삭제된 꿈"}
+              buyerNickname={profile?.nickname ?? ""}
+              sellerNickname={certItem.dreams?.users?.nickname ?? ""}
+              amount={certItem.price}
+              date={certItem.created_at}
+              transactionId={certItem.id}
+            />
+            <button
+              onClick={() => setCertItem(null)}
+              className="absolute -top-3 -right-3 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
+              style={{ background: "rgba(15,8,40,0.95)", border: "1px solid rgba(124,58,237,0.4)", color: "#a78bfa" }}
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

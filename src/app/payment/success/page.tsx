@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
-import { supabase } from "@/lib/supabase";
+import CertificateCard from "@/components/CertificateCard";
 
 interface DreamData {
   title: string;
@@ -19,7 +19,7 @@ interface DreamData {
 function SuccessContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
+  const { user, profile, loading: authLoading } = useAuth();
 
   const paymentKey = searchParams.get("paymentKey") ?? "";
   const orderId = searchParams.get("orderId") ?? "";
@@ -76,13 +76,7 @@ function SuccessContent() {
           setRecipientNickname(data.recipientNickname ?? giftData?.recipientNickname ?? "상대방");
         }
 
-        const { data: dreamData } = await supabase
-          .from("dreams")
-          .select("title, content, interpretation, category, price, lucky_numbers, users(nickname)")
-          .eq("id", dreamId)
-          .single();
-
-        if (dreamData) setDream(dreamData as unknown as DreamData);
+        if (data.dream) setDream(data.dream as DreamData);
         setStatus("success");
       } catch (err) {
         setErrorMsg(err instanceof Error ? err.message : "결제 처리 중 오류가 발생했습니다.");
@@ -215,29 +209,16 @@ function SuccessContent() {
 
         {!isGift && (<>
 
-        {/* 결제 요약 한 줄 */}
-        <div
-          className="rounded-2xl px-5 py-3.5 mb-6 flex items-center justify-center gap-2 flex-wrap text-sm"
-          style={{ background: "rgba(15,8,40,0.8)", border: "1px solid rgba(124,58,237,0.2)" }}
-        >
-          <span style={{ color: "#94a3b8" }}>결제</span>
-          <span
-            className="font-bold"
-            style={{
-              background: "linear-gradient(135deg, #fde68a, #fbbf24)",
-              backgroundClip: "text",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-            }}
-          >
-            ₩{amount.toLocaleString("ko-KR")}
-          </span>
-          <span style={{ color: "rgba(148,163,184,0.5)" }}>|</span>
-          <span style={{ color: "#94a3b8" }}>수수료 20%</span>
-          <span style={{ color: "rgba(148,163,184,0.7)" }}>₩{fee.toLocaleString("ko-KR")}</span>
-          <span style={{ color: "rgba(148,163,184,0.5)" }}>|</span>
-          <span style={{ color: "#94a3b8" }}>판매자 수익</span>
-          <span style={{ color: "rgba(148,163,184,0.7)" }}>₩{sellerAmount.toLocaleString("ko-KR")}</span>
+        {/* 인증서 */}
+        <div className="mb-6">
+          <CertificateCard
+            dreamTitle={dream?.title ?? ""}
+            buyerNickname={profile?.nickname ?? ""}
+            sellerNickname={dream?.users?.nickname ?? ""}
+            amount={amount}
+            date={new Date().toISOString()}
+            transactionId={transactionId}
+          />
         </div>
 
         {dream && (
@@ -390,9 +371,20 @@ function SuccessContent() {
         {/* 하단 버튼 */}
         <div className="space-y-3">
           <Link
-            href="/mypage"
+            href={`/market/${dreamId}`}
             className="block w-full py-3.5 rounded-xl text-white font-semibold text-center btn-glow"
             style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)" }}
+          >
+            구매한 꿈 보러가기
+          </Link>
+          <Link
+            href="/mypage"
+            className="block w-full py-3.5 rounded-xl font-medium text-center"
+            style={{
+              background: "rgba(15,8,40,0.6)",
+              border: "1px solid rgba(124,58,237,0.3)",
+              color: "#a78bfa",
+            }}
           >
             내 구매 목록 보기
           </Link>
@@ -401,8 +393,8 @@ function SuccessContent() {
             className="block w-full py-3.5 rounded-xl font-medium text-center"
             style={{
               background: "rgba(15,8,40,0.6)",
-              border: "1px solid rgba(124,58,237,0.3)",
-              color: "#a78bfa",
+              border: "1px solid rgba(124,58,237,0.25)",
+              color: "rgba(167,139,250,0.6)",
             }}
           >
             꿈시장 더 구경하기

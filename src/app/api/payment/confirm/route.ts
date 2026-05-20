@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     // 꿈 정보 조회
     const { data: dream, error: dreamErr } = await supabase
       .from("dreams")
-      .select("seller_id, price, status")
+      .select("seller_id, price, status, title, content, interpretation, category, lucky_numbers, users(nickname)")
       .eq("id", dreamId)
       .single();
 
@@ -101,7 +101,12 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    return NextResponse.json({ success: true, fee, sellerAmount, transactionId: tx?.id ?? null });
+    const dreamPayload = {
+      title: dream.title, content: dream.content, interpretation: dream.interpretation,
+      category: dream.category, price: dream.price, lucky_numbers: dream.lucky_numbers,
+      users: dream.users,
+    };
+    return NextResponse.json({ success: true, fee, sellerAmount, transactionId: tx?.id ?? null, dream: dreamPayload });
   } catch (err) {
     console.error("Payment confirm error:", err);
     return NextResponse.json({ error: "서버 오류가 발생했습니다." }, { status: 500 });
