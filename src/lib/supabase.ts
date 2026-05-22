@@ -20,10 +20,15 @@ export type Dream = {
   content: string;
   interpretation: string;
   image_url: string | null;
+  image_prompt: string | null;
   price: number;
   category: string;
   status: "판매중" | "판매완료" | "비공개";
   lucky_numbers: number[] | null;
+  is_bad: boolean | null;
+  purge_type: string | null;
+  purge_reason: string | null;
+  purged_at: string | null;
   created_at: string;
   users?: { nickname: string } | null;
 };

@@ -16,6 +16,9 @@ interface Interpretation {
   luckyNumbers: number[];
   marketQuestion: string;
   image_prompt?: string;
+  is_bad?: boolean;
+  purge_type?: "fire" | "water" | "wind" | "void";
+  purge_reason?: string;
 }
 
 const CATEGORY_EMOJI: Record<string, string> = {
@@ -43,6 +46,9 @@ function InterpretContent() {
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [paying, setPaying] = useState(false);
+  const [showPurgeModal, setShowPurgeModal] = useState(false);
+  const [purgeAmount, setPurgeAmount] = useState(500);
+  const [purgePaying, setPurgePaying] = useState(false);
 
   useEffect(() => {
     if (!dream.trim()) {
@@ -92,6 +98,29 @@ function InterpretContent() {
     fetchInterpretation();
     return () => { cancelled = true; };
   }, [dream, router, user, authLoading]);
+
+  const handlePurge = async () => {
+    if (!user || purgePaying || !result) return;
+    setPurgePaying(true);
+    try {
+      const { loadTossPayments } = await import("@tosspayments/tosspayments-sdk");
+      const tossPayments = await loadTossPayments(process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY!);
+      const payment = tossPayments.payment({ customerKey: user.id });
+      const orderId = `purge-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+      localStorage.setItem(`purge-info-${orderId}`, JSON.stringify({ dream, interpretResult: result }));
+      await payment.requestPayment({
+        method: "CARD",
+        amount: { currency: "KRW", value: purgeAmount },
+        orderId,
+        orderName: "나쁜 꿈 소각 의식",
+        successUrl: `${window.location.origin}/payment/purge-success?orderId=${orderId}&amount=${purgeAmount}`,
+        failUrl: `${window.location.origin}/payment/fail`,
+        customerEmail: user.email ?? undefined,
+      });
+    } catch {
+      setPurgePaying(false);
+    }
+  };
 
   const handlePaidInterpret = async () => {
     if (!user || paying) return;
@@ -356,6 +385,33 @@ function InterpretContent() {
           )}
         </div>
 
+        {/* 소각 서비스 — 나쁜 꿈일 때만 */}
+        {result.is_bad && (
+          <div
+            className="rounded-2xl p-5 mb-6"
+            style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)" }}
+          >
+            <div className="flex items-start gap-3">
+              <span className="text-2xl shrink-0">
+                {{ fire: "🔥", water: "💧", wind: "🌬️", void: "🌑" }[result.purge_type ?? "fire"]}
+              </span>
+              <div className="flex-1">
+                <p className="font-semibold text-sm mb-1" style={{ color: "#fca5a5" }}>이 꿈은 불길한 꿈이에요</p>
+                <p className="text-xs leading-relaxed" style={{ color: "rgba(252,165,165,0.7)" }}>
+                  {result.purge_reason}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowPurgeModal(true)}
+              className="w-full mt-4 py-3 rounded-xl font-semibold text-sm"
+              style={{ background: "linear-gradient(135deg, rgba(220,38,38,0.5), rgba(185,28,28,0.5))", border: "1px solid rgba(239,68,68,0.4)", color: "#fca5a5" }}
+            >
+              🔥 이 나쁜 꿈 없애기
+            </button>
+          </div>
+        )}
+
         {/* AI 이미지 안내 */}
         <div
           className="rounded-2xl p-4 mb-6 flex items-center gap-3"
@@ -382,6 +438,50 @@ function InterpretContent() {
               result={result}
               onClose={() => setShowModal(false)}
             />
+          )}
+
+          {showPurgeModal && result && (
+            <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-4 pb-4">
+              <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowPurgeModal(false)} />
+              <div className="relative w-full max-w-sm rounded-3xl p-6"
+                style={{ background: "linear-gradient(135deg, #0a0428, #0f0840)", border: "1px solid rgba(239,68,68,0.4)" }}>
+                <button onClick={() => setShowPurgeModal(false)} className="absolute top-4 right-5 text-xl" style={{ color: "rgba(167,139,250,0.5)" }}>✕</button>
+                <p className="text-3xl mb-2">
+                  {{ fire: "🔥", water: "💧", wind: "🌬️", void: "🌑" }[result.purge_type ?? "fire"]}
+                </p>
+                <h2 className="text-white font-bold text-lg mb-1">나쁜 꿈 소각 의식</h2>
+                <p className="text-xs mb-5" style={{ color: "rgba(252,165,165,0.7)" }}>
+                  결제 후 몽해 할머니의 의식으로 이 꿈을 없애드려요
+                </p>
+                <div className="mb-5">
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-xs font-medium" style={{ color: "#c4b5fd" }}>소각 비용</label>
+                    <span className="font-bold text-lg" style={{ color: "#fca5a5" }}>₩{purgeAmount.toLocaleString("ko-KR")}</span>
+                  </div>
+                  <input
+                    type="range"
+                    min={100}
+                    max={9900}
+                    step={100}
+                    value={purgeAmount}
+                    onChange={(e) => setPurgeAmount(Number(e.target.value))}
+                    className="w-full accent-red-500"
+                  />
+                  <div className="flex justify-between text-xs mt-1" style={{ color: "rgba(167,139,250,0.4)" }}>
+                    <span>₩100</span>
+                    <span>₩9,900</span>
+                  </div>
+                </div>
+                <button
+                  onClick={handlePurge}
+                  disabled={purgePaying}
+                  className="w-full py-3.5 rounded-xl text-white font-semibold disabled:opacity-50"
+                  style={{ background: "linear-gradient(135deg, rgba(220,38,38,0.7), rgba(185,28,28,0.7))" }}
+                >
+                  {purgePaying ? "결제 중..." : `🔥 ₩${purgeAmount.toLocaleString("ko-KR")}으로 소각하기`}
+                </button>
+              </div>
+            </div>
           )}
           <button
             className="w-full py-3.5 rounded-xl font-medium transition-all"

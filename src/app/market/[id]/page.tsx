@@ -212,6 +212,34 @@ export default function MarketDreamPage() {
           </p>
         </div>
 
+        {/* 소각 도장 — 본인만 */}
+        {isSeller && dream.purged_at && (
+          <div className="relative mb-6 rounded-2xl overflow-hidden">
+            <div className="absolute inset-0 z-10 backdrop-blur-sm rounded-2xl" />
+            <div className="absolute inset-0 z-20 flex items-center justify-center">
+              <div style={{ transform: "rotate(-12deg)", animation: "stampIn 0.5s ease forwards" }}>
+                <div className="px-6 py-3 rounded-xl" style={{ border: "4px solid rgba(239,68,68,0.8)" }}>
+                  <p className="font-black text-3xl tracking-widest" style={{ color: "rgba(239,68,68,0.9)" }}>소각완료</p>
+                </div>
+              </div>
+            </div>
+            <div className="glass-card rounded-2xl p-5 select-none">
+              <p className="text-sm leading-relaxed" style={{ color: "#cbd5e1" }}>{dream.interpretation}</p>
+            </div>
+          </div>
+        )}
+
+        {/* 소각 배지 — 구매자 / 마켓 미리보기 */}
+        {dream.purged_at && !isSeller && (
+          <div
+            className="rounded-2xl p-4 mb-5 flex items-center gap-3"
+            style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}
+          >
+            <span className="text-xl">🔥</span>
+            <p className="text-sm" style={{ color: "rgba(252,165,165,0.8)" }}>판매자가 소각한 꿈입니다</p>
+          </div>
+        )}
+
         {/* AI 꿈 그림 — 구매/선물/판매자만 표시 */}
         {showFull && dream.image_url && (
           <div className="mb-6 rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(124,58,237,0.3)" }}>

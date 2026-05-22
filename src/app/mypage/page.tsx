@@ -50,6 +50,8 @@ const STATUS_STYLE: Record<string, { label: string; bg: string; color: string; b
   비공개:   { label: "비공개",   bg: "rgba(234,179,8,0.15)",  color: "#fbbf24", border: "rgba(234,179,8,0.3)" },
 };
 
+const PURGE_BADGE = { label: "🔥 소각됨", bg: "rgba(239,68,68,0.12)", color: "#fca5a5", border: "rgba(239,68,68,0.3)" };
+
 function timeAgo(date: string) {
   const diff = Date.now() - new Date(date).getTime();
   const days = Math.floor(diff / 86400000);
@@ -441,7 +443,12 @@ export default function MyPage() {
                     <div className="rounded-2xl p-4 transition-all hover:border-violet-500/40" style={{ background: "rgba(15,8,40,0.8)", border: "1px solid rgba(124,58,237,0.2)" }}>
                       <div className="flex items-start justify-between gap-3 mb-2">
                         <h3 className="font-semibold text-sm leading-snug line-clamp-1 flex-1" style={{ color: "#f1f5f9" }}>{dream.title}</h3>
-                        <span className="text-xs px-2 py-0.5 rounded-full shrink-0" style={{ background: st.bg, color: st.color, border: `1px solid ${st.border}` }}>{st.label}</span>
+                        <div className="flex gap-1 shrink-0">
+                          {(dream as Dream & { purged_at?: string | null }).purged_at && (
+                            <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: PURGE_BADGE.bg, color: PURGE_BADGE.color, border: `1px solid ${PURGE_BADGE.border}` }}>{PURGE_BADGE.label}</span>
+                          )}
+                          <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: st.bg, color: st.color, border: `1px solid ${st.border}` }}>{st.label}</span>
+                        </div>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: "rgba(124,58,237,0.15)", color: "rgba(196,181,253,0.8)", border: "1px solid rgba(124,58,237,0.2)" }}>{dream.category}</span>

@@ -14,6 +14,9 @@ interface Interpretation {
   luckyNumbers: number[];
   marketQuestion: string;
   image_prompt?: string;
+  is_bad?: boolean;
+  purge_type?: string;
+  purge_reason?: string;
 }
 
 interface Props {
@@ -51,6 +54,9 @@ export default function RegisterDreamModal({ dream, result, onClose }: Props) {
           price,
           lucky_numbers: result.luckyNumbers,
           image_prompt: result.image_prompt ?? null,
+          is_bad: result.is_bad ?? false,
+          purge_type: result.purge_type ?? null,
+          purge_reason: result.purge_reason ?? null,
           status: "판매중",
         })
         .select("id")
