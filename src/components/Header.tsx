@@ -61,7 +61,7 @@ export default function Header({ secondaryHref, secondaryLabel }: Props) {
             <div className="flex items-center gap-2">
               <Link
                 href="/mypage"
-                className="text-sm hidden sm:block px-3 py-1.5 rounded-full transition-all"
+                className="text-sm px-3 py-1.5 rounded-full transition-all"
                 style={{
                   background: "rgba(124, 58, 237, 0.15)",
                   color: "#c4b5fd",
