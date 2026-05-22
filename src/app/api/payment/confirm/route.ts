@@ -3,7 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
 export async function POST(request: NextRequest) {
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
     const sellerAmount = amount - fee;
 
     // 거래 기록
-    const { data: tx } = await supabase.from("transactions").insert({
+    const { data: tx, error: txErr } = await supabase.from("transactions").insert({
       dream_id: dreamId,
       buyer_id: buyerId,
       seller_id: dream.seller_id,
@@ -74,6 +74,7 @@ export async function POST(request: NextRequest) {
       seller_amount: sellerAmount,
       status: "완료",
     }).select("id").single();
+    if (txErr) throw txErr;
 
     // 꿈 상태 변경
     await supabase.from("dreams").update({ status: "판매완료" }).eq("id", dreamId);
