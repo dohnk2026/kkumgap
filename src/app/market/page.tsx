@@ -31,17 +31,27 @@ function DreamCard({ dream }: { dream: DreamWithSeller }) {
       >
         {/* 상단: 카테고리 + 시간 */}
         <div className="px-4 pt-4 pb-2 flex items-center justify-between gap-2">
-          <span
-            className="text-xs px-2.5 py-1 rounded-full font-medium shrink-0"
-            style={{
-              background: "rgba(124, 58, 237, 0.2)",
-              color: "#c4b5fd",
-              border: "1px solid rgba(124, 58, 237, 0.3)",
-            }}
-          >
-            {dream.category}
-          </span>
-          <span className="text-xs truncate" style={{ color: "rgba(148, 163, 184, 0.5)" }}>
+          <div className="flex items-center gap-1.5 min-w-0">
+            <span
+              className="text-xs px-2.5 py-1 rounded-full font-medium shrink-0"
+              style={{
+                background: "rgba(124, 58, 237, 0.2)",
+                color: "#c4b5fd",
+                border: "1px solid rgba(124, 58, 237, 0.3)",
+              }}
+            >
+              {dream.category}
+            </span>
+            {dream.status === "판매완료" && (
+              <span
+                className="text-xs px-2 py-1 rounded-full font-medium shrink-0"
+                style={{ background: "rgba(100,116,139,0.2)", color: "#94a3b8", border: "1px solid rgba(100,116,139,0.3)" }}
+              >
+                판매완료
+              </span>
+            )}
+          </div>
+          <span className="text-xs truncate shrink-0" style={{ color: "rgba(148, 163, 184, 0.5)" }}>
             {timeAgo(dream.created_at)}
           </span>
         </div>
@@ -98,7 +108,7 @@ export default function MarketPage() {
       let query = supabase
         .from("dreams")
         .select("*, users(nickname)")
-        .eq("status", "판매중");
+        .in("status", ["판매중", "판매완료"]);
 
       if (activeCategory !== "전체") {
         query = query.eq("category", activeCategory);

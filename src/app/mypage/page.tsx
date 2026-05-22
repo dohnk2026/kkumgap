@@ -98,17 +98,19 @@ function MyPage() {
     if (!user) { router.replace("/login"); return; }
 
     async function loadData() {
-      const [dreamsRes, purchasesRes, salesRes, receivedRes, sentRes, balanceRes] = await Promise.all([
+      const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token ?? "";
+
+    const purchasesApiRes = await fetch("/api/mypage/purchases", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const purchasesApiData = purchasesApiRes.ok ? await purchasesApiRes.json() : { purchases: [] };
+
+    const [dreamsRes, salesRes, receivedRes, sentRes, balanceRes] = await Promise.all([
         supabase
           .from("dreams")
           .select("*")
           .eq("seller_id", user!.id)
-          .order("created_at", { ascending: false }),
-        supabase
-          .from("transactions")
-          .select("id, price, created_at, confirmed_at, dreams(id, title, category, image_url, users(nickname, tag))")
-          .eq("buyer_id", user!.id)
-          .eq("status", "완료")
           .order("created_at", { ascending: false }),
         supabase
           .from("transactions")
@@ -133,7 +135,7 @@ function MyPage() {
       ]);
 
       setMyDreams(dreamsRes.data ?? []);
-      setPurchases((purchasesRes.data ?? []) as unknown as PurchasedItem[]);
+      setPurchases(purchasesApiData.purchases as PurchasedItem[]);
       setTotalRevenue(
         (salesRes.data ?? []).reduce((sum, t) => sum + (t.seller_amount ?? 0), 0)
       );
