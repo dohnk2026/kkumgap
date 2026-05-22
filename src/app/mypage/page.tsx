@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Header from "@/components/Header";
 import CertificateCard from "@/components/CertificateCard";
 import { useAuth } from "@/lib/auth-context";
@@ -60,11 +60,21 @@ function timeAgo(date: string) {
   return `${days}일 전`;
 }
 
-export default function MyPage() {
+export default function MyPageWrapper() {
+  return (
+    <Suspense fallback={<div className="min-h-screen" style={{ background: "#050210" }} />}>
+      <MyPage />
+    </Suspense>
+  );
+}
+
+function MyPage() {
   const { user, profile, loading: authLoading } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
-  const [activeTab, setActiveTab] = useState<Tab>("selling");
+  const initialTab = (searchParams.get("tab") as Tab | null) ?? "selling";
+  const [activeTab, setActiveTab] = useState<Tab>(initialTab);
   const [certItem, setCertItem] = useState<PurchasedItem | null>(null);
   const [editingNickname, setEditingNickname] = useState(false);
   const [nicknameInput, setNicknameInput] = useState("");

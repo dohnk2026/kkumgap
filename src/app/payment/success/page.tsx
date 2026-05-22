@@ -451,7 +451,7 @@ function SuccessContent() {
             구매한 꿈 보러가기
           </Link>
           <Link
-            href="/mypage"
+            href="/mypage?tab=bought"
             className="block w-full py-3.5 rounded-xl font-medium text-center"
             style={{
               background: "rgba(15,8,40,0.6)",
