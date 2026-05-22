@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 
+
 interface Interpretation {
   category: string;
   traditional: string;
@@ -43,10 +44,14 @@ export default function RegisterDreamModal({ dream, result, onClose }: Props) {
     setError(null);
 
     try {
-      const { data: newDream, error: dreamErr } = await supabase
-        .from("dreams")
-        .insert({
-          seller_id: user.id,
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch("/api/dreams/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token ?? ""}`,
+        },
+        body: JSON.stringify({
           title: title.trim(),
           content: dream,
           interpretation: `${result.traditional}\n\n${result.psychological}${result.advice ? "\n\n" + result.advice : ""}`,
@@ -57,13 +62,12 @@ export default function RegisterDreamModal({ dream, result, onClose }: Props) {
           is_bad: result.is_bad ?? false,
           purge_type: result.purge_type ?? null,
           purge_reason: result.purge_reason ?? null,
-          status: "판매중",
-        })
-        .select("id")
-        .single();
-      if (dreamErr) throw dreamErr;
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
 
-      setDreamId(newDream.id);
+      setDreamId(data.id);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "등록에 실패했습니다.");
     } finally {
