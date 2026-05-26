@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 
 interface Star {
@@ -85,10 +84,7 @@ export default function HomePage() {
       className="min-h-screen relative overflow-hidden"
       style={{ background: "linear-gradient(to bottom, #050210, #0a0428, #050210)" }}
     >
-      {/* 별 배경 */}
       <StarField />
-
-      {/* 배경 네뷸라 효과 */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
@@ -99,33 +95,41 @@ export default function HomePage() {
 
       <Header />
 
-      {/* 히어로 섹션 */}
-      <section className="relative z-10 flex flex-col items-center justify-center px-4 pt-12 pb-20">
-        {/* 달 */}
+      <section className="relative z-10 flex flex-col items-center justify-center px-4 pt-10 pb-20">
+        {/* 아이콘 */}
         <div
-          className="moon-glow mb-10 rounded-full"
+          className="mb-8 rounded-full flex items-center justify-center text-4xl"
           style={{
-            width: "80px",
-            height: "80px",
-            background: "linear-gradient(135deg, #fef9c3, #fde68a, #fbbf24)",
+            width: "88px",
+            height: "88px",
+            background: "linear-gradient(135deg, rgba(220,38,38,0.25), rgba(124,58,237,0.25))",
+            border: "1px solid rgba(239,68,68,0.3)",
             animation: "float 6s ease-in-out infinite",
           }}
-        />
+        >
+          🔥
+        </div>
 
         {/* 타이틀 */}
-        <h1 className="text-4xl md:text-6xl font-bold text-center leading-tight mb-5">
-          <span className="gradient-text">당신의 꿈은</span>
+        <h1 className="text-4xl md:text-6xl font-bold text-center leading-tight mb-4">
+          <span className="text-white">악몽이</span>
           <br />
-          <span className="text-white">얼마인가요?</span>
+          <span className="gradient-text">당신을 괴롭히나요?</span>
         </h1>
 
         <p
-          className="text-center text-base md:text-lg mb-12 max-w-md leading-relaxed"
+          className="text-center text-base md:text-lg mb-3 max-w-md leading-relaxed"
           style={{ color: "#a78bfa" }}
         >
-          꿈을 입력하면 전통해몽 · 심리해석 · 감정가를 알려드려요.
+          꿈을 입력하면 악몽인지 분석하고
           <br />
-          해석된 꿈을 시장에 올려 판매해보세요.
+          몽해 할머니의 정화 의식으로 없애드려요.
+        </p>
+        <p
+          className="text-center text-sm mb-10"
+          style={{ color: "rgba(167,139,250,0.5)" }}
+        >
+          좋은 꿈이라면 꿈시장에 올려 판매할 수 있어요
         </p>
 
         {/* 꿈 입력 폼 */}
@@ -134,7 +138,7 @@ export default function HomePage() {
             <textarea
               value={dream}
               onChange={(e) => setDream(e.target.value)}
-              placeholder="오늘 꾼 꿈을 자세히 적어주세요...&#10;&#10;예: 하늘을 날아다니다가 갑자기 바다에 빠졌는데..."
+              placeholder="오늘 꾼 꿈을 자세히 적어주세요...&#10;&#10;예: 누군가에게 쫓기다가 낭떠러지에서 떨어지는 꿈을 꿨어요..."
               disabled={isLoading}
               maxLength={1000}
               rows={6}
@@ -165,42 +169,26 @@ export default function HomePage() {
           >
             {isLoading ? (
               <span className="flex items-center justify-center gap-2">
-                <svg
-                  className="animate-spin h-4 w-4 text-white"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                  />
+                <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
-                꿈을 해석하는 중...
+                꿈을 분석하는 중...
               </span>
             ) : !authLoading && !user ? (
-              "🔒 로그인하고 무료 해석 받기"
+              "🔒 로그인하고 무료 분석받기"
             ) : (
-              "✨ 꿈 해석하기"
+              "🔥 꿈 분석하기"
             )}
           </button>
         </form>
 
         {/* 통계 */}
-        <div className="mt-16 flex gap-10 text-center">
+        <div className="mt-14 flex gap-10 text-center">
           {[
-            { label: "해석된 꿈", value: "1,284개" },
-            { label: "거래된 꿈", value: "392개" },
-            { label: "총 거래액", value: "₩2,180,000" },
+            { label: "소각된 악몽", value: "847건" },
+            { label: "분석된 꿈", value: "1,284개" },
+            { label: "꿈 거래액", value: "₩2,180,000" },
           ].map((stat) => (
             <div key={stat.label}>
               <p className="text-lg font-bold text-white">{stat.value}</p>
@@ -217,25 +205,22 @@ export default function HomePage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {[
             {
-              icon: "🔮",
-              title: "AI 해몽",
-              desc: "전통해몽 + 심리해석을 결합한 정밀 분석",
+              icon: "🔥",
+              title: "악몽 감지",
+              desc: "AI가 꿈을 분석해 불길한 기운과 경고 신호를 찾아내요",
             },
             {
-              icon: "💰",
-              title: "감정가 산정",
-              desc: "꿈의 희귀성과 감성 지수를 기반으로 가격 책정",
+              icon: "🌀",
+              title: "정화 의식",
+              desc: "몽해 할머니가 불·물·바람·공허 중 맞는 방식으로 악몽을 소각해요",
             },
             {
               icon: "🌙",
               title: "꿈 거래",
-              desc: "해석된 꿈을 시장에 올려 수익 창출",
+              desc: "좋은 꿈이라면 꿈시장에 올려 다른 사람에게 팔 수 있어요",
             },
           ].map((item) => (
-            <div
-              key={item.title}
-              className="glass-card rounded-xl p-5 text-center"
-            >
+            <div key={item.title} className="glass-card rounded-xl p-5 text-center">
               <div className="text-3xl mb-3">{item.icon}</div>
               <h3 className="font-semibold text-white mb-1.5">{item.title}</h3>
               <p className="text-sm leading-relaxed" style={{ color: "#a78bfa" }}>
