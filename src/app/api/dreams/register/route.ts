@@ -23,8 +23,11 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { title, content, interpretation, price, lucky_numbers, image_prompt, is_bad, purge_type, purge_reason } = body;
 
-    const VALID_CATEGORIES = ["재물운", "성공운", "연애운", "경고몽", "태몽"];
-    const category = VALID_CATEGORIES.includes(body.category) ? body.category : "성공운";
+    const CATEGORY_MAP: Record<string, string> = {
+      Fortune: "재물운", Success: "성공운", Romance: "연애운", Warning: "경고몽", "Birth Dream": "태몽",
+      재물운: "재물운", 성공운: "성공운", 연애운: "연애운", 경고몽: "경고몽", 태몽: "태몽",
+    };
+    const category = CATEGORY_MAP[body.category] ?? "성공운";
 
     if (!title || !content) return NextResponse.json({ error: "필수 항목이 없습니다." }, { status: 400 });
 

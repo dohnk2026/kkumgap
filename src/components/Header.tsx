@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 
 interface Props {
-  /** 헤더 오른쪽에 보조 링크가 필요한 경우 */
   secondaryHref?: string;
   secondaryLabel?: string;
 }
@@ -31,68 +30,45 @@ export default function Header({ secondaryHref, secondaryLabel }: Props) {
           WebkitTextFillColor: "transparent",
         }}
       >
-        꿈값
+        Vanishd
       </Link>
 
       <nav className="flex items-center gap-3">
-        {/* 보조 링크 (페이지별 커스텀) */}
         {secondaryHref && secondaryLabel && (
-          <Link
-            href={secondaryHref}
-            className="text-sm hidden sm:block"
-            style={{ color: "rgba(196, 181, 253, 0.7)" }}
-          >
+          <Link href={secondaryHref} className="text-sm hidden sm:block" style={{ color: "rgba(196, 181, 253, 0.7)" }}>
             {secondaryLabel}
           </Link>
         )}
 
-        {/* 꿈시장 고정 링크 */}
-        <Link
-          href="/market"
-          className="text-sm"
-          style={{ color: "rgba(196, 181, 253, 0.8)" }}
-        >
-          꿈시장
+        <Link href="/market" className="text-sm" style={{ color: "rgba(196, 181, 253, 0.8)" }}>
+          Dream Market
         </Link>
 
-        {/* 인증 영역 */}
         {!loading && (
           user ? (
             <div className="flex items-center gap-2">
               <Link
                 href="/mypage"
                 className="text-sm px-3 py-1.5 rounded-full transition-all"
-                style={{
-                  background: "rgba(124, 58, 237, 0.15)",
-                  color: "#c4b5fd",
-                  border: "1px solid rgba(124, 58, 237, 0.25)",
-                }}
+                style={{ background: "rgba(124, 58, 237, 0.15)", color: "#c4b5fd", border: "1px solid rgba(124, 58, 237, 0.25)" }}
               >
-                {profile?.nickname ?? "마이페이지"}{profile?.tag && <span style={{ opacity: 0.55, fontSize: "0.7em" }}> #{profile.tag}</span>}
+                {profile?.nickname ?? "My Page"}{profile?.tag && <span style={{ opacity: 0.55, fontSize: "0.7em" }}> #{profile.tag}</span>}
               </Link>
               <button
                 onClick={handleSignOut}
                 className="text-xs px-3 py-1.5 rounded-full transition-all"
-                style={{
-                  background: "rgba(15, 8, 40, 0.6)",
-                  color: "rgba(167, 139, 250, 0.8)",
-                  border: "1px solid rgba(124, 58, 237, 0.25)",
-                }}
+                style={{ background: "rgba(15, 8, 40, 0.6)", color: "rgba(167, 139, 250, 0.8)", border: "1px solid rgba(124, 58, 237, 0.25)" }}
               >
-                로그아웃
+                Sign Out
               </button>
             </div>
           ) : (
             <Link
               href="/login"
               className="text-sm px-4 py-1.5 rounded-full transition-all"
-              style={{
-                background: "rgba(124, 58, 237, 0.2)",
-                color: "#c4b5fd",
-                border: "1px solid rgba(124, 58, 237, 0.4)",
-              }}
+              style={{ background: "rgba(124, 58, 237, 0.2)", color: "#c4b5fd", border: "1px solid rgba(124, 58, 237, 0.4)" }}
             >
-              로그인
+              Sign In
             </Link>
           )
         )}

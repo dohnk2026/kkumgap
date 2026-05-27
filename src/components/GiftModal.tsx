@@ -59,7 +59,7 @@ export default function GiftModal({
   };
 
   const handleSend = async () => {
-    if (!selected) { setError("받는 사람을 선택해주세요."); return; }
+    if (!selected) { setError("Please select a recipient."); return; }
 
     if (giftType === "purchased") {
       onProceedPayment?.(selected.id, `${selected.nickname}#${selected.tag}`, message);
@@ -81,7 +81,7 @@ export default function GiftModal({
         }),
       });
       const data = await res.json();
-      if (!res.ok) { setError(data.error || "선물 전송에 실패했어요."); return; }
+      if (!res.ok) { setError(data.error || "Failed to send gift."); return; }
       setSent(true);
       setTimeout(() => { onFreeSent?.(); onClose(); }, 2200);
     } finally {
@@ -99,9 +99,9 @@ export default function GiftModal({
         {sent ? (
           <div className="text-center py-4">
             <p className="text-5xl mb-4" style={{ animation: "float 2s ease-in-out infinite" }}>🎁</p>
-            <p className="text-white font-bold text-lg mb-1">선물 완료!</p>
+            <p className="text-white font-bold text-lg mb-1">Gift sent!</p>
             <p className="text-sm" style={{ color: "#a78bfa" }}>
-              {selected?.nickname}#{selected?.tag}님에게 꿈을 선물했어요
+              You gifted a dream to {selected?.nickname}#{selected?.tag}
             </p>
           </div>
         ) : (
@@ -116,11 +116,11 @@ export default function GiftModal({
 
             <div className="mb-5">
               <p className="text-lg mb-0.5">🎁</p>
-              <h2 className="text-white font-bold text-lg mb-1">꿈 선물하기</h2>
+              <h2 className="text-white font-bold text-lg mb-1">Gift a Dream</h2>
               <p className="text-xs" style={{ color: "#a78bfa" }}>
                 {giftType === "purchased"
-                  ? `₩${dream.price.toLocaleString("ko-KR")} 결제 후 친구에게 선물해요`
-                  : "내 꿈을 친구에게 무료로 공유해요"}
+                  ? `Pay ₩${dream.price.toLocaleString("ko-KR")} to gift this dream to a friend`
+                  : "Share your dream with a friend for free"}
               </p>
             </div>
 
@@ -135,20 +135,20 @@ export default function GiftModal({
             {/* 닉네임 검색 */}
             <div className="mb-4">
               <label className="block text-xs font-medium mb-1.5" style={{ color: "#c4b5fd" }}>
-                받는 사람 <span style={{ color: "rgba(167,139,250,0.5)", fontWeight: 400 }}>닉네임 또는 닉네임#태그</span>
+                Recipient <span style={{ color: "rgba(167,139,250,0.5)", fontWeight: 400 }}>username or username#tag</span>
               </label>
               <div className="relative">
                 <input
                   type="text"
                   value={query}
                   onChange={(e) => { setQuery(e.target.value); setSelected(null); }}
-                  placeholder="꿈꾸미 또는 꿈꾸미#1234"
+                  placeholder="dreamuser or dreamuser#1234"
                   className="w-full px-4 py-3 rounded-xl text-white text-sm outline-none"
                   style={{ background: "rgba(15,8,40,0.8)", border: `1px solid ${selected ? "rgba(124,58,237,0.6)" : "rgba(124,58,237,0.3)"}` }}
                 />
                 {selected && (
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs px-2 py-0.5 rounded-full" style={{ background: "rgba(124,58,237,0.3)", color: "#c4b5fd" }}>
-                    ✓ 선택됨
+                    ✓ Selected
                   </span>
                 )}
               </div>
@@ -160,9 +160,9 @@ export default function GiftModal({
                   style={{ background: "rgba(15,8,40,0.95)", border: "1px solid rgba(124,58,237,0.3)" }}
                 >
                   {searching ? (
-                    <p className="px-4 py-3 text-xs" style={{ color: "rgba(167,139,250,0.6)" }}>검색 중...</p>
+                    <p className="px-4 py-3 text-xs" style={{ color: "rgba(167,139,250,0.6)" }}>Searching...</p>
                   ) : results.length === 0 ? (
-                    <p className="px-4 py-3 text-xs" style={{ color: "rgba(167,139,250,0.6)" }}>검색 결과가 없어요</p>
+                    <p className="px-4 py-3 text-xs" style={{ color: "rgba(167,139,250,0.6)" }}>No results found</p>
                   ) : (
                     results.map((u) => (
                       <button
@@ -185,12 +185,12 @@ export default function GiftModal({
             {/* 메시지 */}
             <div className="mb-5">
               <label className="block text-xs font-medium mb-1.5" style={{ color: "#c4b5fd" }}>
-                메시지 (선택) <span style={{ color: "rgba(167,139,250,0.5)" }}>{message.length}/100</span>
+                Message (optional) <span style={{ color: "rgba(167,139,250,0.5)" }}>{message.length}/100</span>
               </label>
               <textarea
                 value={message}
                 onChange={(e) => setMessage(e.target.value.slice(0, 100))}
-                placeholder="함께 보낼 메시지를 적어주세요..."
+                placeholder="Write a message to include..."
                 rows={2}
                 className="w-full px-4 py-3 rounded-xl text-white text-sm outline-none resize-none"
                 style={{ background: "rgba(15,8,40,0.8)", border: "1px solid rgba(124,58,237,0.3)" }}
@@ -206,10 +206,10 @@ export default function GiftModal({
               style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)" }}
             >
               {sending
-                ? "전송 중..."
+                ? "Sending..."
                 : giftType === "purchased"
-                ? `결제하기 · ₩${dream.price.toLocaleString("ko-KR")}`
-                : "🎁 선물하기"}
+                ? `Pay · ₩${dream.price.toLocaleString("ko-KR")}`
+                : "🎁 Send Gift"}
             </button>
           </>
         )}

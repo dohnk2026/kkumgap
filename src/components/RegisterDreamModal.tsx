@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 
-
 interface Interpretation {
   category: string;
   traditional: string;
@@ -37,8 +36,8 @@ export default function RegisterDreamModal({ dream, result, onClose }: Props) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim()) { setError("제목을 입력해주세요."); return; }
-    if (!user) { setError("로그인이 필요해요."); return; }
+    if (!title.trim()) { setError("Please enter a title."); return; }
+    if (!user) { setError("You need to sign in."); return; }
 
     setLoading(true);
     setError(null);
@@ -66,43 +65,35 @@ export default function RegisterDreamModal({ dream, result, onClose }: Props) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-
       setDreamId(data.id);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "등록에 실패했습니다.");
+      setError(err instanceof Error ? err.message : "Failed to list dream.");
     } finally {
       setLoading(false);
     }
   };
 
-  // 성공 화면
   if (dreamId) {
     return (
       <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-4 pb-4">
         <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-        <div
-          className="relative w-full max-w-md rounded-3xl p-8 text-center"
-          style={{ background: "linear-gradient(135deg, #0a0428, #0f0840)", border: "1px solid rgba(124, 58, 237, 0.5)" }}
-        >
+        <div className="relative w-full max-w-md rounded-3xl p-8 text-center"
+          style={{ background: "linear-gradient(135deg, #0a0428, #0f0840)", border: "1px solid rgba(124, 58, 237, 0.5)" }}>
           <p className="text-5xl mb-4">🎉</p>
-          <p className="text-white font-bold text-lg mb-1">꿈이 등록됐어요!</p>
+          <p className="text-white font-bold text-lg mb-1">Your dream is listed!</p>
           <p className="text-sm mb-6" style={{ color: "#a78bfa" }}>
-            아이고~ 이 꿈 금방 팔릴 거여~
+            Grandma Mong says it&apos;ll sell fast~
           </p>
           <div className="space-y-2">
-            <button
-              onClick={() => router.push(`/market/${dreamId}`)}
+            <button onClick={() => router.push(`/market/${dreamId}`)}
               className="w-full py-3 rounded-xl text-white font-medium"
-              style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)" }}
-            >
-              내 꿈 보러가기
+              style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)" }}>
+              View my dream
             </button>
-            <button
-              onClick={() => router.push("/market")}
+            <button onClick={() => router.push("/market")}
               className="w-full py-3 rounded-xl font-medium"
-              style={{ background: "rgba(15,8,40,0.6)", border: "1px solid rgba(124,58,237,0.3)", color: "#a78bfa" }}
-            >
-              꿈시장 구경하기
+              style={{ background: "rgba(15,8,40,0.6)", border: "1px solid rgba(124,58,237,0.3)", color: "#a78bfa" }}>
+              Browse Dream Market
             </button>
           </div>
         </div>
@@ -113,96 +104,59 @@ export default function RegisterDreamModal({ dream, result, onClose }: Props) {
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-4 pb-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div
-        className="relative w-full max-w-md rounded-3xl p-6"
-        style={{ background: "linear-gradient(135deg, #0a0428, #0f0840)", border: "1px solid rgba(124, 58, 237, 0.5)" }}
-      >
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-5 text-xl leading-none"
-          style={{ color: "rgba(167, 139, 250, 0.5)" }}
-        >
-          ✕
-        </button>
+      <div className="relative w-full max-w-md rounded-3xl p-6"
+        style={{ background: "linear-gradient(135deg, #0a0428, #0f0840)", border: "1px solid rgba(124, 58, 237, 0.5)" }}>
+        <button onClick={onClose} className="absolute top-4 right-5 text-xl leading-none"
+          style={{ color: "rgba(167, 139, 250, 0.5)" }}>✕</button>
 
-        <h2 className="text-white font-bold text-lg mb-1">꿈시장에 올리기</h2>
+        <h2 className="text-white font-bold text-lg mb-1">List on Dream Market</h2>
         <p className="text-sm mb-5" style={{ color: "#a78bfa" }}>
-          아이고~ 이 꿈 좋은 꿈이여. 얼른 올려봐요!
+          Grandma Mong says this one&apos;s a keeper — list it!
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* 제목 */}
           <div>
             <label className="block text-xs font-medium mb-1.5" style={{ color: "#c4b5fd" }}>
-              꿈 제목{" "}
+              Dream title{" "}
               <span style={{ color: "rgba(167,139,250,0.5)" }}>({title.length}/20)</span>
             </label>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value.slice(0, 20))}
-              placeholder={result.marketQuestion || "이 꿈의 제목을 지어주세요"}
+            <input type="text" value={title} onChange={(e) => setTitle(e.target.value.slice(0, 20))}
+              placeholder={result.marketQuestion || "Give your dream a title"}
               className="w-full px-4 py-3 rounded-xl text-white text-sm outline-none"
-              style={{ background: "rgba(15,8,40,0.8)", border: "1px solid rgba(124,58,237,0.3)" }}
-            />
+              style={{ background: "rgba(15,8,40,0.8)", border: "1px solid rgba(124,58,237,0.3)" }} />
           </div>
 
-          {/* 가격 슬라이더 */}
           <div>
             <label className="block text-xs font-medium mb-1.5" style={{ color: "#c4b5fd" }}>
-              판매가{"  "}
-              <span
-                className="font-bold"
-                style={{
-                  background: "linear-gradient(135deg, #fde68a, #fbbf24)",
-                  backgroundClip: "text",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                }}
-              >
-                ₩{price.toLocaleString("ko-KR")}
+              Price{"  "}
+              <span className="font-bold" style={{ background: "linear-gradient(135deg, #fde68a, #fbbf24)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                ₩{price.toLocaleString()}
               </span>
               <span className="ml-1" style={{ color: "rgba(167,139,250,0.45)", fontWeight: 400 }}>
-                (AI 추천 ₩{result.price.toLocaleString("ko-KR")})
+                (AI suggested ₩{result.price.toLocaleString()})
               </span>
             </label>
-            <input
-              type="range"
-              min={100}
-              max={5000}
-              step={100}
-              value={price}
-              onChange={(e) => setPrice(Number(e.target.value))}
-              className="w-full accent-violet-500"
-            />
+            <input type="range" min={100} max={5000} step={100} value={price}
+              onChange={(e) => setPrice(Number(e.target.value))} className="w-full accent-violet-500" />
             <div className="flex justify-between text-xs mt-1" style={{ color: "rgba(167,139,250,0.4)" }}>
-              <span>₩100</span>
-              <span>₩5,000</span>
+              <span>₩100</span><span>₩5,000</span>
             </div>
           </div>
 
-          {/* 카테고리 */}
           <div className="flex items-center gap-2">
-            <span
-              className="text-xs px-3 py-1 rounded-full"
-              style={{ background: "rgba(124,58,237,0.2)", color: "#c4b5fd", border: "1px solid rgba(124,58,237,0.3)" }}
-            >
+            <span className="text-xs px-3 py-1 rounded-full"
+              style={{ background: "rgba(124,58,237,0.2)", color: "#c4b5fd", border: "1px solid rgba(124,58,237,0.3)" }}>
               {result.category}
             </span>
-            <span className="text-xs" style={{ color: "rgba(167,139,250,0.5)" }}>
-              AI가 분류한 카테고리
-            </span>
+            <span className="text-xs" style={{ color: "rgba(167,139,250,0.5)" }}>AI category</span>
           </div>
 
           {error && <p className="text-sm" style={{ color: "#f87171" }}>{error}</p>}
 
-          <button
-            type="submit"
-            disabled={loading || !title.trim()}
+          <button type="submit" disabled={loading || !title.trim()}
             className="w-full py-3.5 rounded-xl text-white font-semibold transition-all disabled:opacity-50"
-            style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)" }}
-          >
-            {loading ? "등록 중..." : "🌙 꿈시장에 올리기"}
+            style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)" }}>
+            {loading ? "Listing..." : "🌙 List on Dream Market"}
           </button>
         </form>
       </div>

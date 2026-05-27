@@ -8,10 +8,10 @@ type Phase = "confirming" | "ready" | "loading" | "ritual" | "animating" | "done
 type PurgeType = "fire" | "water" | "wind" | "void";
 
 const PURGE_INFO: Record<PurgeType, { emoji: string; label: string; color: string; desc: string }> = {
-  fire: { emoji: "🔥", label: "화염 소각", color: "#f97316", desc: "불꽃으로 태워 재로 돌려보냅니다" },
-  water: { emoji: "💧", label: "수류 소각", color: "#38bdf8", desc: "강물에 흘려보내 바다로 돌아갑니다" },
-  wind: { emoji: "🌬️", label: "풍산 소각", color: "#a3e635", desc: "바람에 흩어 하늘로 사라집니다" },
-  void: { emoji: "🌑", label: "공허 봉인", color: "#818cf8", desc: "어둠 속으로 침잠시켜 봉인합니다" },
+  fire: { emoji: "🔥", label: "Flame Purge", color: "#f97316", desc: "Burned to ashes and returned to the void" },
+  water: { emoji: "💧", label: "Water Purge", color: "#38bdf8", desc: "Released into the river, carried to the sea" },
+  wind: { emoji: "🌬️", label: "Wind Purge", color: "#a3e635", desc: "Scattered by the wind, dissolved into the sky" },
+  void: { emoji: "🌑", label: "Void Seal", color: "#818cf8", desc: "Sealed deep within the darkness" },
 };
 
 const ANIMATION_STYLES = `
@@ -104,7 +104,7 @@ function PurgeSuccessContent() {
     if (!paymentKey || !orderId || !amount || !user) return;
 
     const stored = localStorage.getItem(`purge-info-${orderId}`);
-    if (!stored) { setErrorMsg("결제 정보를 찾을 수 없습니다."); setPhase("done"); return; }
+    if (!stored) { setErrorMsg("Payment information not found."); setPhase("done"); return; }
 
     const { dream, interpretResult } = JSON.parse(stored);
 
@@ -115,7 +115,7 @@ function PurgeSuccessContent() {
         body: JSON.stringify({ paymentKey, orderId, amount, userId: user!.id, dream, interpretResult }),
       });
       const data = await res.json();
-      if (!res.ok) { setErrorMsg(data.error ?? "결제 확인에 실패했습니다."); setPhase("done"); return; }
+      if (!res.ok) { setErrorMsg(data.error ?? "Payment confirmation failed."); setPhase("done"); return; }
 
       setDreamId(data.dreamId);
       setPurgeType(data.purge_type as PurgeType);
@@ -135,7 +135,7 @@ function PurgeSuccessContent() {
       body: JSON.stringify({ dreamId }),
     });
     const data = await res.json();
-    if (!res.ok) { setErrorMsg(data.error ?? "의식 생성에 실패했습니다."); setPhase("done"); return; }
+    if (!res.ok) { setErrorMsg(data.error ?? "Failed to create ritual."); setPhase("done"); return; }
 
     setRitualLines(data.lines);
     setPhase("ritual");
@@ -172,7 +172,7 @@ function PurgeSuccessContent() {
             style={{ background: "rgba(124,58,237,0.2)", animation: "pulse-glow 1.5s ease-in-out infinite" }}>
             🔮
           </div>
-          <p style={{ color: "#a78bfa" }}>결제를 확인하는 중...</p>
+          <p style={{ color: "#a78bfa" }}>Confirming payment...</p>
         </div>
       </main>
     );
@@ -186,11 +186,11 @@ function PurgeSuccessContent() {
           <style>{ANIMATION_STYLES}</style>
           <div className="text-center max-w-sm">
             <p className="text-4xl mb-4">😔</p>
-            <p className="text-white font-semibold mb-2">오류가 발생했습니다</p>
+            <p className="text-white font-semibold mb-2">An error occurred</p>
             <p className="text-sm mb-6" style={{ color: "#a78bfa" }}>{errorMsg}</p>
             <button onClick={() => router.push("/")} className="px-6 py-3 rounded-xl text-white font-medium"
               style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)" }}>
-              홈으로
+              Go home
             </button>
           </div>
         </main>
@@ -204,7 +204,7 @@ function PurgeSuccessContent() {
             {info.emoji}
           </div>
           <p className="text-2xl font-bold text-white mb-3" style={{ animation: "fadeInUp 0.8s 0.2s ease both" }}>
-            이 꿈은 사라졌습니다
+            This dream has vanished
           </p>
           <p className="text-sm mb-8" style={{ color: "rgba(167,139,250,0.7)", animation: "fadeInUp 0.8s 0.4s ease both" }}>
             {info.desc}
@@ -212,11 +212,11 @@ function PurgeSuccessContent() {
           <div className="space-y-2" style={{ animation: "fadeInUp 0.8s 0.6s ease both" }}>
             <button onClick={() => router.push("/mypage")} className="w-full py-3 rounded-xl text-white font-medium"
               style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)" }}>
-              마이페이지에서 확인
+              View in My Page
             </button>
             <button onClick={() => router.push("/")} className="w-full py-3 rounded-xl font-medium"
               style={{ background: "rgba(15,8,40,0.6)", border: "1px solid rgba(124,58,237,0.3)", color: "#a78bfa" }}>
-              홈으로
+              Go home
             </button>
           </div>
         </div>
@@ -240,11 +240,11 @@ function PurgeSuccessContent() {
             </p>
           </div>
           <p className="text-center text-xs mb-5" style={{ color: "rgba(148,163,184,0.5)" }}>
-            의식을 시작하면 되돌릴 수 없습니다
+            Once the ritual begins, it cannot be undone
           </p>
           <button onClick={startRitual} className="w-full py-4 rounded-xl text-white font-semibold text-base"
             style={{ background: `linear-gradient(135deg, ${info.color}99, ${info.color}66)`, border: `1px solid ${info.color}60` }}>
-            의식 시작하기
+            Begin the Ritual
           </button>
         </div>
       </main>
@@ -260,7 +260,7 @@ function PurgeSuccessContent() {
           <div className="text-4xl mb-4" style={{ animation: "pulse-glow 1s ease-in-out infinite" }}>
             {info.emoji}
           </div>
-          <p style={{ color: "#a78bfa" }}>몽해 할머니가 의식을 준비하고 있어요...</p>
+          <p style={{ color: "#a78bfa" }}>Grandma Mong is preparing the ritual...</p>
         </div>
       </main>
     );
@@ -315,7 +315,7 @@ export default function PurgeSuccessPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center" style={{ background: "#050210" }}>
-        <p style={{ color: "#a78bfa" }}>불러오는 중...</p>
+        <p style={{ color: "#a78bfa" }}>Loading...</p>
       </div>
     }>
       <PurgeSuccessContent />

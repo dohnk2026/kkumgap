@@ -5,7 +5,10 @@ import Link from "next/link";
 import { supabase, Dream } from "@/lib/supabase";
 import Header from "@/components/Header";
 
-const CATEGORIES = ["전체", "재물운", "성공운", "연애운", "경고몽", "태몽"];
+const CATEGORIES = ["All", "Fortune", "Success", "Romance", "Warning", "Birth Dream"];
+const CATEGORY_DB: Record<string, string> = {
+  Fortune: "재물운", Success: "성공운", Romance: "연애운", Warning: "경고몽", "Birth Dream": "태몽",
+};
 
 type DreamWithSeller = Dream & { users: { nickname: string } | null };
 
@@ -47,7 +50,7 @@ function DreamCard({ dream }: { dream: DreamWithSeller }) {
                 className="text-xs px-2 py-1 rounded-full font-medium shrink-0"
                 style={{ background: "rgba(100,116,139,0.2)", color: "#94a3b8", border: "1px solid rgba(100,116,139,0.3)" }}
               >
-                판매완료
+                Sold
               </span>
             )}
           </div>
@@ -98,7 +101,7 @@ function DreamCard({ dream }: { dream: DreamWithSeller }) {
 export default function MarketPage() {
   const [dreams, setDreams] = useState<DreamWithSeller[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeCategory, setActiveCategory] = useState("전체");
+  const [activeCategory, setActiveCategory] = useState("All");
   const [sortBy, setSortBy] = useState("newest");
 
   useEffect(() => {
@@ -110,8 +113,8 @@ export default function MarketPage() {
         .select("*, users(nickname)")
         .in("status", ["판매중", "판매완료"]);
 
-      if (activeCategory !== "전체") {
-        query = query.eq("category", activeCategory);
+      if (activeCategory !== "All") {
+        query = query.eq("category", CATEGORY_DB[activeCategory] ?? activeCategory);
       }
 
       if (sortBy === "price_high") {
@@ -146,9 +149,9 @@ export default function MarketPage() {
 
       <div className="relative z-10 max-w-3xl mx-auto px-5 pb-20">
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-white mb-2">🌙 꿈 시장</h1>
+          <h1 className="text-3xl font-bold text-white mb-2">🌙 Dream Market</h1>
           <p className="text-sm" style={{ color: "#a78bfa" }}>
-            다른 사람들의 꿈을 구매하세요
+            Buy dreams from other dreamers
           </p>
         </div>
 
@@ -178,29 +181,29 @@ export default function MarketPage() {
             className="text-xs px-3 py-1.5 rounded-lg outline-none"
             style={{ background: "rgba(15,8,40,0.8)", color: "#a78bfa", border: "1px solid rgba(124,58,237,0.2)" }}
           >
-            <option value="newest">최신순</option>
-            <option value="price_high">가격 높은순</option>
-            <option value="price_low">가격 낮은순</option>
+            <option value="newest">Newest</option>
+            <option value="price_high">Price: High to Low</option>
+            <option value="price_low">Price: Low to High</option>
           </select>
         </div>
 
         {loading ? (
           <div className="text-center py-24">
-            <p style={{ color: "#a78bfa" }}>꿈을 불러오는 중...</p>
+            <p style={{ color: "#a78bfa" }}>Loading dreams...</p>
           </div>
         ) : dreams.length === 0 ? (
           <div className="text-center py-24">
             <p className="text-5xl mb-4">🌙</p>
-            <p className="text-white font-semibold mb-2">아직 등록된 꿈이 없어요</p>
+            <p className="text-white font-semibold mb-2">No dreams listed yet</p>
             <p className="text-sm mb-6" style={{ color: "#a78bfa" }}>
-              첫 번째로 꿈을 올려보세요!
+              Be the first to list your dream!
             </p>
             <Link
               href="/"
               className="inline-block px-6 py-3 rounded-xl text-white font-medium text-sm"
               style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)" }}
             >
-              ✨ 꿈 해석하러 가기
+              ✨ Analyze my dream
             </Link>
           </div>
         ) : (
@@ -218,16 +221,16 @@ export default function MarketPage() {
                 border: "1px solid rgba(167,139,250,0.3)",
               }}
             >
-              <p className="text-white font-semibold mb-2">내 꿈도 팔고 싶다면?</p>
+              <p className="text-white font-semibold mb-2">Want to sell your dream?</p>
               <p className="text-sm mb-4" style={{ color: "#a78bfa" }}>
-                꿈을 입력하면 AI가 해몽하고 감정가를 책정해드려요
+                Enter your dream and AI will read it and set a price
               </p>
               <Link
                 href="/"
                 className="btn-glow inline-block px-6 py-3 rounded-xl text-white font-medium text-sm"
                 style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)" }}
               >
-                ✨ 꿈 해석하러 가기
+                ✨ Analyze my dream
               </Link>
             </div>
           </>

@@ -34,7 +34,7 @@ export default function LoginPage() {
     setError(null);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
-      setError("이메일 또는 비밀번호가 올바르지 않아요.");
+      setError("Incorrect email or password.");
     } else {
       router.push("/");
     }
@@ -42,104 +42,61 @@ export default function LoginPage() {
   };
 
   return (
-    <main
-      className="min-h-screen flex flex-col"
-      style={{ background: "linear-gradient(to bottom, #050210, #0a0428, #050210)" }}
-    >
-      <div
-        className="fixed inset-0 pointer-events-none"
-        style={{
-          background: "radial-gradient(ellipse at 50% 30%, rgba(76, 29, 149, 0.2) 0%, transparent 60%)",
-        }}
-      />
+    <main className="min-h-screen flex flex-col" style={{ background: "linear-gradient(to bottom, #050210, #0a0428, #050210)" }}>
+      <div className="fixed inset-0 pointer-events-none"
+        style={{ background: "radial-gradient(ellipse at 50% 30%, rgba(76, 29, 149, 0.2) 0%, transparent 60%)" }} />
 
       <header className="relative z-10 px-6 py-5">
-        <Link
-          href="/"
-          className="text-2xl font-bold"
-          style={{
-            background: "linear-gradient(135deg, #c4b5fd, #818cf8)",
-            backgroundClip: "text",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-          }}
-        >
-          꿈값
+        <Link href="/" className="text-2xl font-bold"
+          style={{ background: "linear-gradient(135deg, #c4b5fd, #818cf8)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+          Vanishd
         </Link>
       </header>
 
       <div className="relative z-10 flex-1 flex items-center justify-center px-5 py-12">
         <div className="w-full max-w-sm">
-          {/* 아이콘 + 타이틀 */}
           <div className="text-center mb-8">
-            <div
-              className="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center text-3xl"
-              style={{
-                background: "linear-gradient(135deg, rgba(124,58,237,0.3), rgba(67,56,202,0.3))",
-                border: "1px solid rgba(124,58,237,0.4)",
-              }}
-            >
-              🌙
+            <div className="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center text-3xl"
+              style={{ background: "linear-gradient(135deg, rgba(124,58,237,0.3), rgba(67,56,202,0.3))", border: "1px solid rgba(124,58,237,0.4)" }}>
+              🔥
             </div>
-            <h1 className="text-2xl font-bold text-white mb-1">다시 만났네요</h1>
-            <p className="text-sm" style={{ color: "#a78bfa" }}>꿈값에 오신 걸 환영해요</p>
+            <h1 className="text-2xl font-bold text-white mb-1">Welcome back</h1>
+            <p className="text-sm" style={{ color: "#a78bfa" }}>Sign in to Vanishd</p>
           </div>
 
-          {/* 구글 로그인 (메인) */}
-          <button
-            onClick={handleGoogleLogin}
+          <button onClick={handleGoogleLogin}
             className="w-full flex items-center justify-center gap-3 py-4 rounded-xl mb-6 font-medium transition-all hover:opacity-90 active:scale-95"
-            style={{ background: "#fff", color: "#1f2937", boxShadow: "0 2px 16px rgba(0,0,0,0.5)" }}
-          >
+            style={{ background: "#fff", color: "#1f2937", boxShadow: "0 2px 16px rgba(0,0,0,0.5)" }}>
             <GoogleIcon />
-            구글로 시작하기
+            Continue with Google
           </button>
 
-          {/* 구분선 */}
           <div className="flex items-center gap-4 mb-6">
             <div className="flex-1 h-px" style={{ background: "rgba(124,58,237,0.2)" }} />
-            <span className="text-xs" style={{ color: "rgba(167,139,250,0.5)" }}>또는</span>
+            <span className="text-xs" style={{ color: "rgba(167,139,250,0.5)" }}>or</span>
             <div className="flex-1 h-px" style={{ background: "rgba(124,58,237,0.2)" }} />
           </div>
 
-          {/* 이메일 로그인 */}
           <form onSubmit={handleEmailLogin} className="space-y-3">
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="이메일"
-              required
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+              placeholder="Email" required
               className="w-full px-4 py-3 rounded-xl text-white text-sm outline-none"
-              style={{ background: "rgba(15,8,40,0.8)", border: "1px solid rgba(124,58,237,0.3)" }}
-            />
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="비밀번호"
-              required
+              style={{ background: "rgba(15,8,40,0.8)", border: "1px solid rgba(124,58,237,0.3)" }} />
+            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password" required
               className="w-full px-4 py-3 rounded-xl text-white text-sm outline-none"
-              style={{ background: "rgba(15,8,40,0.8)", border: "1px solid rgba(124,58,237,0.3)" }}
-            />
-
+              style={{ background: "rgba(15,8,40,0.8)", border: "1px solid rgba(124,58,237,0.3)" }} />
             {error && <p className="text-sm" style={{ color: "#f87171" }}>{error}</p>}
-
-            <button
-              type="submit"
-              disabled={loading}
+            <button type="submit" disabled={loading}
               className="w-full py-3 rounded-xl text-white font-medium text-sm transition-all disabled:opacity-50"
-              style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)" }}
-            >
-              {loading ? "로그인 중..." : "이메일로 로그인"}
+              style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)" }}>
+              {loading ? "Signing in..." : "Sign in with Email"}
             </button>
           </form>
 
           <p className="text-center text-sm mt-6" style={{ color: "rgba(167,139,250,0.6)" }}>
-            아직 계정이 없으신가요?{" "}
-            <Link href="/signup" style={{ color: "#c4b5fd" }} className="font-medium">
-              회원가입
-            </Link>
+            Don&apos;t have an account?{" "}
+            <Link href="/signup" style={{ color: "#c4b5fd" }} className="font-medium">Sign up</Link>
           </p>
         </div>
       </div>

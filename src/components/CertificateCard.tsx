@@ -12,7 +12,7 @@ interface Props {
 }
 
 export default function CertificateCard({ dreamTitle, buyerNickname, buyerTag, sellerNickname, sellerTag, amount, date, transactionId }: Props) {
-  const formattedDate = new Date(date).toLocaleDateString("ko-KR", {
+  const formattedDate = new Date(date).toLocaleDateString("en-US", {
     year: "numeric", month: "long", day: "numeric",
   });
 
@@ -26,10 +26,10 @@ export default function CertificateCard({ dreamTitle, buyerNickname, buyerTag, s
         style={{ background: "linear-gradient(160deg, #0a0428 0%, #0f0840 100%)" }}
       >
         <p className="text-xs font-medium tracking-widest mb-5" style={{ color: "rgba(253,230,138,0.55)" }}>
-          ✦ &nbsp; 꿈값 공식 인증서 &nbsp; ✦
+          ✦ &nbsp; Vanishd Official Certificate &nbsp; ✦
         </p>
 
-        <p className="text-base font-semibold text-white mb-1">꿈 소유권 증명서</p>
+        <p className="text-base font-semibold text-white mb-1">Dream Ownership Certificate</p>
 
         <div
           className="w-16 h-px mx-auto my-4"
@@ -41,25 +41,25 @@ export default function CertificateCard({ dreamTitle, buyerNickname, buyerTag, s
 
         <div className="grid grid-cols-2 gap-x-4 gap-y-3.5 text-left mb-5 px-2">
           <div>
-            <p className="text-xs mb-0.5" style={{ color: "rgba(253,230,138,0.5)" }}>구매자</p>
+            <p className="text-xs mb-0.5" style={{ color: "rgba(253,230,138,0.5)" }}>Buyer</p>
             <p className="text-sm font-semibold text-white">
               {buyerNickname || "—"}
               {buyerTag && <span className="font-normal" style={{ color: "rgba(253,230,138,0.5)" }}> #{buyerTag}</span>}
             </p>
           </div>
           <div>
-            <p className="text-xs mb-0.5" style={{ color: "rgba(253,230,138,0.5)" }}>판매자</p>
+            <p className="text-xs mb-0.5" style={{ color: "rgba(253,230,138,0.5)" }}>Seller</p>
             <p className="text-sm font-semibold text-white">
               {sellerNickname || "—"}
               {sellerTag && <span className="font-normal" style={{ color: "rgba(253,230,138,0.5)" }}> #{sellerTag}</span>}
             </p>
           </div>
           <div>
-            <p className="text-xs mb-0.5" style={{ color: "rgba(253,230,138,0.5)" }}>거래일</p>
+            <p className="text-xs mb-0.5" style={{ color: "rgba(253,230,138,0.5)" }}>Date</p>
             <p className="text-sm font-semibold text-white">{formattedDate}</p>
           </div>
           <div>
-            <p className="text-xs mb-0.5" style={{ color: "rgba(253,230,138,0.5)" }}>결제금액</p>
+            <p className="text-xs mb-0.5" style={{ color: "rgba(253,230,138,0.5)" }}>Amount</p>
             <p
               className="text-sm font-semibold"
               style={{
@@ -83,7 +83,7 @@ export default function CertificateCard({ dreamTitle, buyerNickname, buyerTag, s
           className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-medium"
           style={{ background: "rgba(253,230,138,0.08)", border: "1px solid rgba(253,230,138,0.25)", color: "#fde68a" }}
         >
-          ✦ &nbsp; 꿈값 공식 인증
+          ✦ &nbsp; Vanishd Certified
         </div>
 
         {transactionId && (
